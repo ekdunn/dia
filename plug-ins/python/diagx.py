@@ -19,9 +19,10 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import object
 import string, sys
 
-class Node :
+class Node(object) :
 	def __init__ (self, name) :
 		self.name = name
 		self.context = None
@@ -336,7 +337,7 @@ def ImportXml (sFile, diagramData) :
 		else :
 			del theLinks[c.Name()]
 	theObjects = {}
-	for s in theLinks.keys() :
+	for s in list(theLinks.keys()) :
 		o, h1, h2 = dia.get_object_type("UML - Class").create(0,0)
 		layer.add_object(o)
 		o.properties["name"] = s.encode("UTF-8")
@@ -373,7 +374,7 @@ def ImportXml (sFile, diagramData) :
 		
 		theObjects[s] = o
 	# class connections
-	for s in theLinks.keys() :
+	for s in list(theLinks.keys()) :
 		o1 = theObjects[s]
 		c = theLinks[s]
 		for p in c.Parents() :

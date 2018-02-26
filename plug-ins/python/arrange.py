@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 # Copyright (c) 2007  Hans Breuer <hans@breuer.org>
 
 #    This program is free software; you can redistribute it and/or modify
@@ -14,6 +15,9 @@ from __future__ import print_function
 #   You should have received a copy of the GNU General Public License
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+from past.builtins import cmp
+from builtins import range
+from past.utils import old_div
 import dia
 import math
 
@@ -27,7 +31,7 @@ def DeepCalc (dict, key, seen = None) :
 			continue
 		seen[k] = 1
 		DeepCalc (dict, k, seen)
-	return len(seen.keys())
+	return len(list(seen.keys()))
 
 ##
 # \brief Callback function to be invoked by Dia's menu
@@ -73,7 +77,7 @@ def arrange_connected (data, flags) :
 	bst = []
 	dx = 0
 	dy = 0
-	for key in bs.keys() :
+	for key in list(bs.keys()) :
 		o = bs[key][0]
 		if not o.properties["elem_width"] :
 			print(o)
@@ -89,8 +93,8 @@ def arrange_connected (data, flags) :
 	aw = 0.0
 	for t in bst :
 		aw += (t[1] + t[2])
-	aw = aw / len(bst)
-	rows = int (len(bst) / math.sqrt(aw))
+	aw = old_div(aw, len(bst))
+	rows = int (old_div(len(bst), math.sqrt(aw)))
 	if rows < 2 :
 		rows = 2
 	offsets = []

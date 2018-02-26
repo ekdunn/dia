@@ -17,9 +17,10 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import object
 import os, string, sys, dia
 
-class UninlineRenderer :
+class UninlineRenderer(object) :
 	def __init__ (self) :
 		self.count = 0
 	def begin_render (self, data, filename) :
@@ -29,7 +30,7 @@ class UninlineRenderer :
 		ext = filename[string.rfind(filename, ".")+1:]
 		for layer in data.layers :
 			for o in layer.objects :
-				if "inline_data" in o.properties.keys() :
+				if "inline_data" in list(o.properties.keys()) :
 					if o.properties["inline_data"].value :
 						# remember by position
 						pos = o.properties["obj_pos"].value
@@ -37,7 +38,7 @@ class UninlineRenderer :
 						yk = "%03g" % pos.y
 						key = basename + "-" + layer.name + "x" + xk + "y" + yk
 						imgmap[key] = o
-			for k, o in imgmap.iteritems() :
+			for k, o in imgmap.items() :
 				fname = dirname + "/" + k + "." + ext
 				print(fname)
 				o.properties["image_file"] = fname

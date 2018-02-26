@@ -25,9 +25,12 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import str
+from builtins import range
+from builtins import object
 import sys, dia
 
-class CPropsDialog :
+class CPropsDialog(object) :
 	def __init__(self, diagram, data, props) :
 		import pygtk
 		pygtk.require("2.0")
@@ -61,7 +64,7 @@ class CPropsDialog :
 		table.set_border_width(5)
 		if len(props) :
 			y = 0
-			for s in props.keys() :
+			for s in list(props.keys()) :
 				w = gtk.CheckButton(s)
 				self.checkboxes.append(w)
 				table.attach(w, 0, 1, y, y+1)
@@ -113,7 +116,7 @@ class CPropsDialog :
 			om = self.optionmenues[i]
 			if cb.get_active() :
 				for o in grp :
-					s = self.props.keys()[i]
+					s = list(self.props.keys())[i]
 					o.properties[s] = self.props[s].opts[om.get_history()]
 		self.data.update_extents ()
 		self.diagram.flush()
@@ -122,7 +125,7 @@ class CPropsDialog :
 	def on_delete (self, *args) :
 		self.win.destroy ()
 
-class PropInfo :
+class PropInfo(object) :
 	def __init__ (self, t, n, o) :
 		self.num = 1
 		self.type = t
@@ -142,18 +145,18 @@ def dia_objects_props_cb (data, flags) :
 	# check for properties common to all select objects
 	for o in grp :
 		props = o.properties
-		for s in props.keys() :
+		for s in list(props.keys()) :
 			if props[s].visible :
 				if s in allProps :
 					allProps[s].Add(props[s])
 				else :
 					allProps[s] = PropInfo(props[s].type, props[s].name, props[s])
 	# now eliminate all props not common ...
-	for s in allProps.keys() :
+	for s in list(allProps.keys()) :
 		if allProps[s].num < numProps :
 			del allProps[s]
 	# ... and all props already equal
-	for s in allProps.keys() :
+	for s in list(allProps.keys()) :
 		o1 = allProps[s].opts[0]
 		for o in allProps[s].opts :
 			if o1.value != o.value :
@@ -169,7 +172,7 @@ def dia_objects_props_cb (data, flags) :
 					continue
 				uniques[o.value] = o
 			allProps[s].opts = []
-			for v in uniques.keys() :
+			for v in list(uniques.keys()) :
 				allProps[s].opts.append(uniques[v])
 	# display the dialog
 	try :

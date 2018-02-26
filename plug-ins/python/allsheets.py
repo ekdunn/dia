@@ -33,7 +33,7 @@ def so_get_namespace (sol) :
 					names[sp[0]] += 1
 				else :
 					names[sp[0]] = 1
-	return string.join (names.keys(), ",")
+	return string.join (list(names.keys()), ",")
 
 def check_objecttype_overlap (sheets) :
 	types = dia.registered_types()

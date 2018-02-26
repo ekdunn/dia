@@ -23,9 +23,10 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import object
 import sys, dia
 
-class CFindDialog :
+class CFindDialog(object) :
 	def __init__(self, d, data) :
 		import pygtk
 		pygtk.require("2.0")

@@ -1,3 +1,4 @@
+from __future__ import division
 #  PyDia SVG Renderer
 #  Copyright (c) 2003, 2004 Hans Breuer <hans@breuer.org>
 #
@@ -16,6 +17,9 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import str
+from builtins import object
+from past.utils import old_div
 import sys, string, dia
 
 ##
@@ -27,7 +31,7 @@ import sys, string, dia
 #
 # \extends _DiaPyRenderer
 # \ingroup ExportFilters
-class SvgRenderer :
+class SvgRenderer(object) :
 	def __init__ (self) :
 		self.f = None
 		self.line_width = 0.1
@@ -130,9 +134,9 @@ class SvgRenderer :
 	def _arc (self, center, width, height, angle1, angle2, color, fill=None) :
 		# not in the renderer interface
 		import math
-		mPi180 = math.pi / 180.0
-		rx = width / 2.0
-		ry = height / 2.0
+		mPi180 = old_div(math.pi, 180.0)
+		rx = old_div(width, 2.0)
+		ry = old_div(height, 2.0)
 		sx = center.x + rx * math.cos(mPi180 * angle1)
 		sy = center.y - ry * math.sin(mPi180 * angle1)
 		ex = center.x + rx * math.cos(mPi180 * angle2)
@@ -156,7 +160,7 @@ class SvgRenderer :
 	def draw_ellipse (self, center, width, height, fill, stroke) :
 		self.f.write('<ellipse cx="%.3f" cy="%.3f" rx="%.3f" ry="%.3f" ' \
 				'fill="%s" stroke="%s"  stroke-width="%.3f" %s/>\n' \
-				% (center.x, center.y, width / 2, height / 2,
+				% (center.x, center.y, old_div(width, 2), old_div(height, 2),
 				   self._rgb(fill), self._rgb(stroke),
 				   self.line_width, self._stroke_style()))
 	def _bezier (self, bezpoints) :
@@ -226,10 +230,10 @@ class SvgRenderer :
 		elif style == 1 : # DASHED
 			st = 'stroke-dasharray="%.2f,%.2f"' % (dashlen, dashlen)
 		elif style == 2 : # DASH_DOT,
-			gaplen = (dashlen - dotlen) / 2.0
+			gaplen = old_div((dashlen - dotlen), 2.0)
 			st = 'stroke-dasharray="%.2f,%.2f,%.2f,%.2f"' % (dashlen, gaplen, dotlen, gaplen)
 		elif style == 3 : # DASH_DOT_DOT,
-			gaplen = (dashlen - dotlen) / 3.0
+			gaplen = old_div((dashlen - dotlen), 3.0)
 			st = 'stroke-dasharray="%.2f,%.2f,%.2f,%.2f,%.2f,%.2f"' % (dashlen, gaplen, dotlen, gaplen, dotlen, gaplen)
 		elif style == 4 : # DOTTED
 			st = 'stroke-dasharray="%.2f,%.2f"' % (dotlen, dotlen)

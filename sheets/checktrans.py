@@ -21,6 +21,10 @@
 
 
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import map
+from past.utils import old_div
 import os,sys,string
 from functools import reduce
 try :
@@ -139,10 +143,10 @@ p.setDocumentHandler(ch)
 fnames =sys.argv[1:]
 
 def make_langresult(langdict,colsize):
-    langres = map(lambda s,colsize=colsize: string.ljust(s,colsize),
-                  map(lambda (cc,count),total=langdict['']: 
+    langres = list(map(lambda s,colsize=colsize: string.ljust(s,colsize),
+                  list(map(lambda (cc,count),total=langdict['']: 
                       ("%s:%d%%" % (cc,100*count/total)),
-                      filter(lambda cc_count: cc_count[0], langdict.items())))
+                      [cc_count for cc_count in list(langdict.items()) if cc_count[0]]))))
     langres.sort()
     return langres
 
@@ -159,9 +163,9 @@ for name in fnames:
         p.parse("file://localhost" + os.getcwd() + "/" + name)
         OK=1
 
-        maxlanglen = len(reduce(maxlen,ch.langs.keys(),""))
+        maxlanglen = len(reduce(maxlen,list(ch.langs.keys()),""))
         langres = make_langresult(ch.langs,maxlanglen+5)
-        columns = (79 - (4 + namelen)) / (maxlanglen+5)        
+        columns = old_div((79 - (4 + namelen)), (maxlanglen+5))        
         #print "maxlanglen = ",maxlanglen,"columns=",columns
 
         langres1,langrest = langres[:columns],langres[columns:]
@@ -172,7 +176,7 @@ for name in fnames:
             sys.stdout.write("I: %s %s\n" % (' ' * namelen,
                                              string.join(langresn)))
             
-        for (k,v) in ch.langs.items():
+        for (k,v) in list(ch.langs.items()):
             if k in globlangs:
                 globlangs[k] = globlangs[k] + v
             else:
@@ -183,9 +187,9 @@ for name in fnames:
     except saxlib.SAXException as e:
         sys.stderr.write("E: %s\n" % str(e))
 
-maxlanglen = len(reduce(maxlen,globlangs.keys(),""))
+maxlanglen = len(reduce(maxlen,list(globlangs.keys()),""))
 langres = make_langresult(globlangs,maxlanglen+5)        
-columns = (79 - 12) / (maxlanglen+5)        
+columns = old_div((79 - 12), (maxlanglen+5))        
 
 langres1,langrest = langres[:columns],langres[columns:]
 sys.stdout.write("\nI: OVERALL: %s\n" % string.join(langres1))

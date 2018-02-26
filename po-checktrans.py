@@ -21,6 +21,9 @@
 #
 
 from __future__ import print_function
+from __future__ import division
+from builtins import map
+from past.utils import old_div
 import string,os,sys,math
 from functools import reduce
 
@@ -99,30 +102,29 @@ def maxlen(a,b):
 (t,idents,n,f) = slurp_po(sys.argv[1])
 del t,n,f
 
-translations = map(slurp_po,sys.argv[2:])
-trans = map(lambda (l,i,t,f),ti=idents:
+translations = list(map(slurp_po,sys.argv[2:]))
+trans = list(map(lambda (l,i,t,f),ti=idents:
             "%s:%3d%%(%d/%d/%d)%s"%(l,
                                  100*float(t)/idents,
                                  t,f,idents,
                                  "*" * (idents != i)),
-            translations)
+            translations))
 maxlanglen = len(reduce(maxlen,trans,""))
-trans = map(lambda s,mll=maxlanglen: string.ljust(s,mll),trans)
+trans = list(map(lambda s,mll=maxlanglen: string.ljust(s,mll),trans))
 
 collen = maxlanglen + len("  ")
 
-numcols = int(79 / collen)
-ltnc = (len(trans) / numcols) + (len(trans) % numcols)
+numcols = int(old_div(79, collen))
+ltnc = (old_div(len(trans), numcols)) + (len(trans) % numcols)
 
 cols = []
 while trans:
     c,trans = trans[:ltnc],trans[ltnc:]
     cols.append(c)
 
-lines = map(*tuple([None]+cols))
+lines = list(map(*tuple([None]+cols)))
 
-result = string.join(map(lambda l:string.join(map(NoneStr,list(l)),"  "),
-                         lines),
+result = string.join([string.join(list(map(NoneStr,list(l))),"  ") for l in lines],
                      "\n")
 print(result)
 

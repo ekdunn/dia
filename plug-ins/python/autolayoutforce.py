@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 #  autolayoutforce.py - graph layout plug-in for Dia
 #
 #  Copyright (C) 2008 Frederic-Gerald Morcos <fred.mrocos@gmail.com>
@@ -21,6 +22,7 @@ from __future__ import print_function
 #   You should have received a copy of the GNU General Public License
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+from past.utils import old_div
 import math, dia
 
 def bbox_area (o) :
@@ -50,8 +52,8 @@ def repulsion (rconst, node, other) :
 	numer = m1 * m2 * rconst
 
 	try :
-		fx = (numer * dx) / denom
-		fy = (numer * dy) / denom
+		fx = old_div((numer * dx), denom)
+		fy = old_div((numer * dy), denom)
 	except ZeroDivisionError :
 		print("ZeroDivisionError")
 		return (0,0)

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 # PyDia DOT Renderer
 # Copyright (c) 2005 Hans Breuer <hans@breuer.org>
 
@@ -20,9 +21,12 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import str
+from builtins import object
+from past.utils import old_div
 import sys, dia
 
-class DotRenderer :
+class DotRenderer(object) :
 	def __init__ (self) :
 		self.nodes = {}
 		self.edges = {}
@@ -48,7 +52,7 @@ class DotRenderer :
 		self.f.write ("digraph test {\n")
 		# preserve the ratio as given by the bounding box
 		rect = data.extents
-		ratio = (rect.bottom - rect.top) / (rect.right - rect.left)
+		ratio = old_div((rect.bottom - rect.top), (rect.right - rect.left))
 		self.f.write ("ratio=%.3f\n" % (ratio,))
 		# extract some attributes as well as grouping
 		self.f.write("node [style=filled]\n") # otherwise fillcolor is ignored

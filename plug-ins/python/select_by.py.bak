@@ -1,3 +1,4 @@
+from __future__ import print_function
 #    Select Objects By Common Properties
 #    Copyright (c) 2003, 2013 Hans Breuer <hans@breuer.org>
 #
@@ -85,8 +86,8 @@ def do_dialog (d, data) :
 def select_by (diagram, data, name, value) :
 	objs = data.active_layer.objects
 	for o in objs :
-		if o.properties.has_key (name) :
-			print "<==", o.properties[name].value
+		if name in o.properties :
+			print("<==", o.properties[name].value)
 			if value == None or o.properties[name].value == value :
 				diagram.select (o)
 
@@ -99,7 +100,7 @@ def select_by_selected (data, name) :
 	grp = data.get_sorted_selected()
 	bFoundAny = 0
 	for o in grp :
-		if o.properties.has_key(name) :
+		if name in o.properties :
 			select_by (d, data, name, o.properties[name].value)
 			bFoundAny = 1
 	if not bFoundAny :

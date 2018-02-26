@@ -23,9 +23,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import object
 import dia, string
 
-class CScaleDialog :
+class CScaleDialog(object) :
 	def __init__(self, d, data) :
 		import pygtk
 		pygtk.require("2.0")
@@ -135,9 +136,9 @@ def SimpleScale(data, factor) :
 					scaleFailed[o.type.name] += 1
 				else :
 					scaleFailed[o.type.name] = 1
-	if len(scaleFailed.keys()) > 0 :
+	if len(list(scaleFailed.keys())) > 0 :
 		sMsg = "Scaling failed for : "
-		for s in scaleFailed.keys() :
+		for s in list(scaleFailed.keys()) :
 			sMsg = sMsg + "\n%s (%d)" % (s, scaleFailed[s])
 		dia.message(1, sMsg)
 	data.update_extents ()

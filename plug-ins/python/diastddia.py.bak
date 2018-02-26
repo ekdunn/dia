@@ -1,4 +1,3 @@
-from __future__ import division
 #  PyDia Standard Dia Renderer
 #  Copyright (c) 2009 Hans Breuer <hans@breuer.org>
 #
@@ -19,11 +18,9 @@ from __future__ import division
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-from builtins import object
-from past.utils import old_div
 import sys, string, os, math, dia
 
-class StandardDiaRenderer(object) :
+class StandardDiaRenderer :
 	def __init__ (self) :
 		self.f = None
 		self.line_width = 0.1
@@ -179,7 +176,7 @@ class StandardDiaRenderer(object) :
         <dia:real val="%.3f"/>
       </dia:attribute>
 %s%s
-    </dia:object>''' % (self.oid, center.x-old_div(width,2), center.y-old_div(height,2), width, height, 
+    </dia:object>''' % (self.oid, center.x-width/2, center.y-height/2, width, height, 
 			self._tinting(color, fill, 'border_color', 'border_width'), self._stroke_style()))
 	def draw_ellipse (self, center, width, height, fill, stroke) :
 		if fill :
@@ -189,9 +186,9 @@ class StandardDiaRenderer(object) :
 
 	def _arc(self, center, width, height, angle1, angle2, color, fill) :
 		self.oid = self.oid + 1
-		mPi180 = old_div(math.pi, 180.0)
-		rx = old_div(width, 2.0)
-		ry = old_div(height, 2.0)
+		mPi180 = math.pi / 180.0
+		rx = width / 2.0
+		ry = height / 2.0
 		sx = center.x + rx * math.cos(mPi180 * angle1)
 		sy = center.y - ry * math.sin(mPi180 * angle1)
 		ex = center.x + rx * math.cos(mPi180 * angle2)
@@ -199,8 +196,8 @@ class StandardDiaRenderer(object) :
 		# the middle control point
 		cx = center.x + rx * math.cos(mPi180 * (angle1 + angle2)/2.0)
 		cy = center.y - ry * math.sin(mPi180 * (angle1 + angle2)/2.0)
-		dx = old_div((sx + ex), 2.0) - cx
-		dy = old_div((sy + ey), 2.0) - cy
+		dx = (sx + ex) / 2.0 - cx
+		dy = (sy + ey) / 2.0 - cy
 		dist = math.sqrt(dx * dx + dy * dy)
 		if angle1 > angle2 :
 			dist = -dist
@@ -318,7 +315,7 @@ class StandardDiaRenderer(object) :
 		# ensure <broken> does not get through
 		fname = fname.replace("&", "&amp;").replace(">", "&gt;").replace("<", "&lt;")
 		self.oid = self.oid + 1
-		if abs(old_div(width,height) - old_div(image.width,image.height)) < 0.001 :
+		if abs(width/height - image.width/image.height) < 0.001 :
 			keep_aspect = "true"
 		else :
 			keep_aspect = "false"

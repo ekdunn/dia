@@ -16,6 +16,10 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from past.builtins import cmp
+from builtins import str
+from builtins import range
+from builtins import object
 import sys, os, re, string, math, time
 
 g_maxWeight = 1
@@ -31,7 +35,7 @@ Operators = { "2" : " new", "3" : " delete",
 			  "4" : "=", "5" : ">>", "6" : "<<", "7" : "!", "8" : "==", "9" : "!=", 
 			  "C" : "->", "Z" : "-", "F" : "--", "G" : "-", "H" : "+", "D" : "*", "E" : "++", 
 			  "M" : "<", "Y" : "+=", "A" : "[]", "B" : " char const *", "K" : "/" }
-rDemangle = re.compile ("\?(?P<tor>\?[01" + string.join(Operators.keys(), "") + "])*(?P<sym>[\w@_]+?(?=@))@@")
+rDemangle = re.compile ("\?(?P<tor>\?[01" + string.join(list(Operators.keys()), "") + "])*(?P<sym>[\w@_]+?(?=@))@@")
 # still NOT handling
 '''
 d:\Projects>undname ?ReleaseAccess@?$CWriteAccess@VCDocEx@app@@@utl@@UAEXXZ
@@ -64,7 +68,7 @@ def Demangle (symbols) :
 				dm =  string.join(names, "::") + "::" + names[-1]
 			elif  m.group("tor") == "?1" : # constructor
 				dm =  string.join(names, "::") + "::~" + names[-1]
-			elif  m.group("tor") != None and m.group("tor")[0] == "?" and m.group("tor")[1] in Operators.keys() : # constructor
+			elif  m.group("tor") != None and m.group("tor")[0] == "?" and m.group("tor")[1] in list(Operators.keys()) : # constructor
 				dm =  string.join(names, "::") + "::operator" + Operators[m.group("tor")[1]]
 			else :
 				dm =  string.join(names, "::")
@@ -75,7 +79,7 @@ def Demangle (symbols) :
 			demangled.append (s)
 	return demangled
 
-class Node :
+class Node(object) :
 	def __init__ (self, name, depth) :
 		self.name = name
 		self.deps = {}
@@ -92,7 +96,7 @@ class Node :
 			else :
 				self.exports[s] = used
 
-class Edge :
+class Edge(object) :
 	def __init__ (self, name, symbols, delayLoad) :
 		global g_maxWeight
 		self.name = name # the target
@@ -240,7 +244,7 @@ def GetDepsWin32 (sFrom, dAll, nMaxDepth, nDepth=0) :
 
 		# restore original depth (independent of how the recursion works)
 		for sd in directDeps :
-			if sd in dAll.keys() :
+			if sd in list(dAll.keys()) :
 				try :
 					dAll[sd].depth = nDepth + 1 
 				except AttributeError as msg :
@@ -256,7 +260,7 @@ def GetDepsPosix (sFrom, dAll, nMaxDepth, nDepth=0) :
 	if sFromName in g_DontFollow :
 		dAll[sFromName] = Node (sFromName, nDepth) # needed here so other algoritm can remove it ;)
 		return
-	if not sFromName in dAll.keys() :
+	if not sFromName in list(dAll.keys()) :
 		print("Creating", sFromName, nDepth)
 		node = Node (sFromName, nDepth)
 		sPath = sFrom
@@ -311,7 +315,7 @@ def GetDepsPosix (sFrom, dAll, nMaxDepth, nDepth=0) :
 						symbol = me.group(1)
 						# print symbol
 						# print me.group(1), r.group('name') 
-						if symbol in dImports.keys() :
+						if symbol in list(dImports.keys()) :
 							# direct connection
 							usedSymbols.append (symbol)
 						else :
@@ -333,7 +337,7 @@ def GetDepsPosix (sFrom, dAll, nMaxDepth, nDepth=0) :
 			print(sFromName, "->", sd, "level:", nDepth+1)
 			sdn = os.path.split(sd)[-1]
 			GetDepsPosix (sd, dAll, nMaxDepth-nDepth+2, nDepth+1)
-			if sdn in dAll.keys() :
+			if sdn in list(dAll.keys()) :
 				#print "Adjusting depth", sd, nDepth+1
 				dAll[sdn].depth = nDepth+1 # adjust to original depth (not how our recursion found it)
 
@@ -345,7 +349,7 @@ def Remove (deps, list) :
 	for s in list :
 		if s in deps :
 			del deps[s]
-		for sn in deps.keys() :
+		for sn in list(deps.keys()) :
 			node = deps[sn]
 			if s in node.deps :
 				del node.deps[s]
@@ -353,32 +357,32 @@ def RemoveRegEx (deps, reg_ex) :
 	"If a module matches reg_ex remove it"
 	import re
 	rr = re.compile (reg_ex)
-	for k1 in deps.keys() :
+	for k1 in list(deps.keys()) :
 		if rr.match (k1) :
 			del deps[k1]
 		else :
 			node = deps[k1]
-			for k2 in node.deps.keys () :
+			for k2 in list(node.deps.keys ()) :
 				if rr.match (k2) :
 					del node.deps[k2]
 def RemoveNonLocal (deps) :
 	"Remove everything not available in the current directory"
-	for k in deps.keys() :
+	for k in list(deps.keys()) :
 		node = deps[k]
-		for c in node.deps.keys() :
+		for c in list(node.deps.keys()) :
 			if not os.path.exists (c) :
 				del node.deps[c]
 	# also remove from the root
-	root_keys = deps.keys()
+	root_keys = list(deps.keys())
 	for k in root_keys :
 		if not os.path.exists (k) :
 			del deps[k]
 
 def RemoveBySymbols (deps, list) :
 	"If a connection is conly caused by some symbol in 'list' it is removed"
-	for k in deps.keys() :
+	for k in list(deps.keys()) :
 		node = deps[k]
-		for c in node.deps.keys () :
+		for c in list(node.deps.keys ()) :
 			edge = node.deps[c]
 			kills = []
 			for s2 in edge.symbols :
@@ -400,7 +404,7 @@ def RemoveBySymbols (deps, list) :
 					edge.symbols.remove (s)
 		# remove the symbols also from the dependency edge is pointing to
 		for s in list :
-			if s in node.exports.keys() :
+			if s in list(node.exports.keys()) :
 				del node.exports[s]
 
 def Reduce (deps, f, bHintOnly = 1) :
@@ -408,12 +412,12 @@ def Reduce (deps, f, bHintOnly = 1) :
 	# first iteration: two components are connected in both directions
 	# if one connection is much weaker than the other one, the weaker one is considered bad
 	# if both have similar weight they are both treated as bad and removed
-	keys = deps.keys()
+	keys = list(deps.keys())
 	keys.sort()
 	nReduced = 0
 	for k in keys :
 		node = deps[k]
-		for c in node.deps.keys () :
+		for c in list(node.deps.keys ()) :
 			edge = node.deps[c]
 			if c in deps :
 				node2 = deps[c]
@@ -460,30 +464,30 @@ def CutLeafs (deps, nCuts) :
 	leafs = {}
 	cut = [] # what we have cut in the last pass
 	while nCuts > 0 :
-		cut = leafs.keys()
+		cut = list(leafs.keys())
 		leafs = {}
 		# first pass: find leafs
-		for k in deps.keys() :
+		for k in list(deps.keys()) :
 			node = deps[k]
-			if len(node.deps.keys ()) == 0 :
+			if len(list(node.deps.keys ())) == 0 :
 				leafs[k] = 0
-		if len(leafs.keys()) == 0 :
+		if len(list(leafs.keys())) == 0 :
 			break # nothing remaining
 		nCuts -= 1
 		# second pass : remove references to leafs
-		for k in deps.keys() :
+		for k in list(deps.keys()) :
 			node = deps[k]
-			for c in leafs.keys() :
+			for c in list(leafs.keys()) :
 				if c in node.deps :
 					leafs[c] += 1
 					del node.deps[c]
 		# third pass: remove the leafs
-		for k in leafs.keys() :
+		for k in list(leafs.keys()) :
 			# we either need to reset leafs in every round or 
 			if k in deps :
 				del deps[k]
-	if len(leafs.keys()) > 0 :
-		return leafs.keys()
+	if len(list(leafs.keys())) > 0 :
+		return list(leafs.keys())
 	return cut
 def TransitiveReduction (deps, tops, treds=[]) :
 	"""If a component A has B and C as dependency and B also depends on C reduce A->C.
@@ -491,26 +495,26 @@ def TransitiveReduction (deps, tops, treds=[]) :
 	   'inherited' symbols and 'depth' as well.
 	"""
 	for a in tops :
-		bs = deps[a].deps.keys()
+		bs = list(deps[a].deps.keys())
 		cs = {}
 		for b in bs :
-			for c in deps[b].deps.keys() :
-				if not c in cs.keys() :
+			for c in list(deps[b].deps.keys()) :
+				if not c in list(cs.keys()) :
 					cs[c] = 1
 		# bs and cs are now complete, remove all a->b, where b in cs
 		extra_syms = {}
-		for c in cs.keys() :
+		for c in list(cs.keys()) :
 			if c in bs :
 				print("Cut", a, "->", c)
 				# we need to know which edge a->b is taking the extra symbols
 				extra_syms[c] = deps[a].deps[c].symbols
 				del deps[a].deps[c]
 		# fill remaining bs having a c dependency with the extra symbols
-		e_keys = extra_syms.keys()
+		e_keys = list(extra_syms.keys())
 		for e in e_keys :
-			bs = deps[a].deps.keys() # they are reduced above
+			bs = list(deps[a].deps.keys()) # they are reduced above
 			for b in bs :
-				if e in deps[b].deps.keys () :
+				if e in list(deps[b].deps.keys ()) :
 					print("Adjust", a, "->", b, "+", len(extra_syms[e]), "from", e)
 					#NOT: deps[a].deps[b].symbols.extend(extra_syms[e]) # producing duplicates
 					for s in extra_syms[e] :
@@ -519,21 +523,21 @@ def TransitiveReduction (deps, tops, treds=[]) :
 					del extra_syms[e]
 					break
 		#FIXME: something we have cut before may not be visible anymore (would need a deeper search or an ordered reduction)
-		if len(extra_syms.keys()) :
-			print("Not adjusted:", a, "->", string.join(extra_syms.keys(), ", "))
+		if len(list(extra_syms.keys())) :
+			print("Not adjusted:", a, "->", string.join(list(extra_syms.keys()), ", "))
 	# recurse into remaining bs
 	for a in tops :
-		bs = deps[a].deps.keys()
+		bs = list(deps[a].deps.keys())
 		treds.append(a) # rember already done to avoid endless recursion
 		TransitiveReduction (deps, bs, treds)
 
 def TopMost (deps) :
 	"everything not used by something else"
-	keys = deps.keys ()
+	keys = list(deps.keys ())
 	topmost = []
 	used = {}
 	for k in keys :
-		for d in deps[k].deps.keys() :
+		for d in list(deps[k].deps.keys()) :
 			if d not in used :
 				used[d] = 1
 	for k in keys :
@@ -543,31 +547,31 @@ def TopMost (deps) :
 
 def RecalculateDepth (deps) :
 	"From the top-most - i.e. unused - down to the bottom level "
-	keys = deps.keys ()
+	keys = list(deps.keys ())
 	used = {}
 	tops = []
 	depth = 0
 	while 1 :
 		top = keys
 		for k in keys :
-			for d in deps[k].deps.keys() :
+			for d in list(deps[k].deps.keys()) :
 				used[d] = 1
 		for k in keys :
-			if not k in used.keys () :
+			if not k in list(used.keys ()) :
 				tops.append (k)
 		if len(tops) == 0 :
 			break
 		for k in tops :
 			deps[k].depth = depth
-		keys = filter (lambda x : not x in tops, keys)
+		keys = [x for x in keys if not x in tops]
 		tops = []
 		depth += 1
 
 def CalculateUsed (deps) :
 	"Given the complete dependency tree calcualte the use count of every symbol"
-	for sn in deps.keys() :
+	for sn in list(deps.keys()) :
 		node = deps[sn]
-		edge_keys = node.deps.keys()
+		edge_keys = list(node.deps.keys())
 		for se in edge_keys :
 			edge = node.deps[se]
 			target = deps[se]
@@ -582,12 +586,12 @@ def UnGlob (comps) :
 		for d in g :
 			if d not in comp_dict :
 				comp_dict[d] = 1
-	return comp_dict.keys()
+	return list(comp_dict.keys())
 
 def Sorted (dict) :
 	"given a dictionary with name to number, sort by number"
 	ret = []
-	keys = dict.keys()
+	keys = list(dict.keys())
 	keys.sort ( lambda a, b : cmp(dict[a], dict[b]) )
 	for k in keys :
 		ret.append ((k, dict[k]))
@@ -701,15 +705,15 @@ def DumpSymbols (deps, f) :
 	Symbols = {}
 	Modules = {}
 	Imports = {}
-	node_keys = deps.keys()
+	node_keys = list(deps.keys())
 	node_keys.sort()
 	for sn in node_keys :
 		node = deps[sn]
-		if len(node.deps.keys()) == 0 :
+		if len(list(node.deps.keys())) == 0 :
 			continue
 		f.write (sn + "\n")
 		Imports[sn] = 0
-		edge_keys = node.deps.keys()
+		edge_keys = list(node.deps.keys())
 		edge_keys.sort()
 		for se in edge_keys :
 			edge = node.deps[se]
@@ -742,18 +746,18 @@ def DumpSymbols (deps, f) :
 			f.write (s + " (0) : <no users>\n")
 
 def DumpUnusedSymbols (deps, f) :
-	for sd in deps.keys () :
+	for sd in list(deps.keys ()) :
 		node = deps[sd]
-		for se in node.deps.keys() :
+		for se in list(node.deps.keys()) :
 			edge = node.deps[se]
 			d = deps[se]
 			for ss in edge.symbols :
-				if ss in d.exports.keys() :
+				if ss in list(d.exports.keys()) :
 					del d.exports[ss]
 	# after we have removed *all* used symbols
-	for sd in deps.keys () :
+	for sd in list(deps.keys ()) :
 		node = deps[sd]
-		unused = node.exports.keys()
+		unused = list(node.exports.keys())
 		f.write (sd + "\n")
 		unused.sort ()
 		for ss in unused :
@@ -762,12 +766,12 @@ def DumpUnusedSymbols (deps, f) :
 def DumpSymbolsUse (deps, f) :
 	f.write ("*** Symbol Use Count ***\n")
 	CalculateUsed (deps)
-	node_keys = deps.keys()
+	node_keys = list(deps.keys())
 	node_keys.sort()
 	for sn in node_keys :
 		node = deps[sn]
 		used = 0
-		for k, v in node.exports.iteritems() :
+		for k, v in node.exports.items() :
 			if v > 0 :
 				used += 1
 		f.write (node.name + " (%d:%d)\n" % (used, len(node.exports)))
@@ -779,17 +783,17 @@ def DumpSymbolsUse (deps, f) :
 				f.write ("\t?\t" + sym + "\n")
 
 def DumpReverse (deps, f) :
-	node_keys = deps.keys ()
+	node_keys = list(deps.keys ())
 	edges = {}
 	for sn in node_keys :
 		node = deps[sn]
-		edge_keys = node.deps.keys ()
+		edge_keys = list(node.deps.keys ())
 		for se in edge_keys :
-			if se in edges.keys () :
+			if se in list(edges.keys ()) :
 				edges[se].append ((node.deps[se], sn))
 			else :
 				edges[se] = [(node.deps[se], sn)]
-	edge_keys = edges.keys ()
+	edge_keys = list(edges.keys ())
 	edge_keys.sort ()
 	for se in edge_keys :
 		f.write (se + "\n")
@@ -804,19 +808,19 @@ def RemoveStrays (deps) :
 	"Remove every node which has and is no dependency"
 	strays = {}
 	# does it have no dependencies?
-	for k in deps.keys() :
-		if len(deps[k].deps.keys()) == 0 :
+	for k in list(deps.keys()) :
+		if len(list(deps[k].deps.keys())) == 0 :
 			strays[k] = 1
 	# even if it does not have a dependency it still may be a dependency
-	stray_keys = strays.keys()
-	for k in deps.keys() :
+	stray_keys = list(strays.keys())
+	for k in list(deps.keys()) :
 		node = deps[k]
-		for d in node.deps.keys () :
+		for d in list(node.deps.keys ()) :
 			if d in stray_keys :
-				if d in strays.keys () : # delete it only once ;)
+				if d in list(strays.keys ()) : # delete it only once ;)
 					#print "Not stray:", d
 					del strays[d]
-	stray_keys = strays.keys()
+	stray_keys = list(strays.keys())
 	for k in stray_keys :
 		print("Stray:", k)
 		del deps[k]
@@ -824,11 +828,11 @@ def RemoveStrays (deps) :
 def CreateDsm (deps) :
 	"Given the complete dependency tree create a dsm sorted by 'leafs'"
 	RemoveStrays(deps)
-	nTotal = len(deps.keys())
+	nTotal = len(list(deps.keys()))
 	nDone = 0
 	# for DSM row and colum index are the same, this is mapping the module name to it's index (row number)
 	table_map = {}
-	node_keys = deps.keys()
+	node_keys = list(deps.keys())
 	node_keys.sort()
 	level = 0 # the iteration where we cut the leafs
 	node_levels = {}
@@ -838,7 +842,7 @@ def CreateDsm (deps) :
 		for sn in node_keys :
 			node = deps[sn]
 			nRefs = 0
-			for d in node.deps.keys() : # the dependencies
+			for d in list(node.deps.keys()) : # the dependencies
 				if d in node_keys : # still referenced
 					nRefs = nRefs + 1
 			if nRefs == 0 :
@@ -849,13 +853,13 @@ def CreateDsm (deps) :
 			histo = {} # map number of dependencies to module
 			for sn in node_keys :
 				node = deps[sn]
-				num = len(node.deps.keys())
-				if not num in histo.keys() :
+				num = len(list(node.deps.keys()))
+				if not num in list(histo.keys()) :
 					histo[num] = []
 				histo[num].append(sn)
 			# find modules with lowest number of dependencies
-			for num in range(1, len(deps.keys())+1) :
-				if num in histo.keys() :
+			for num in range(1, len(list(deps.keys()))+1) :
+				if num in list(histo.keys()) :
 					leafs = histo[num]
 					print("Circular cut:", leafs)
 					break
@@ -865,7 +869,7 @@ def CreateDsm (deps) :
 			node_levels[sn] = level
 		level = level + 1
 		# everything which has no reference into our tree or is allready processed
-		node_keys = filter (lambda x: not x in table_map.keys(), node_keys)
+		node_keys = [x for x in node_keys if not x in list(table_map.keys())]
 	keys = Sorted (table_map)
 	# now we know the index of every module in the dsm, fill cells with number of symbols
 	dsm = []
@@ -876,7 +880,7 @@ def CreateDsm (deps) :
 		for x, m in keys :
 			# a colum has all the dependencies of a module
 			source = deps[x]
-			if y in source.deps.keys() :
+			if y in list(source.deps.keys()) :
 				edge = source.deps[y]
 				# referencing the object, to later have access to all symbols, instead of just it's number
 				row.append (edge)
@@ -929,8 +933,8 @@ def SaveDB (deps, fname) :
 		' ImportedModules integer, ExportedSymbols integer, Level integer)')
 	for y in range(0, len(k)) :
 		# the number of imports - module count
-		num_imp = len(deps[k[y]].deps.keys())
-		num_exp = len(deps[k[y]].exports.keys())
+		num_imp = len(list(deps[k[y]].deps.keys()))
+		num_exp = len(list(deps[k[y]].exports.keys()))
 		cur.execute ('INSERT INTO Modules VALUES(?, ?, ?, ?)', (k[y], num_imp, num_exp, levels[k[y]]))
 	con.commit()
 	# create an index of ModuleNames
@@ -959,7 +963,7 @@ def SaveDB (deps, fname) :
 	# add unused symbols, too
 	for sm in k :
 		node = deps[sm]
-		for e, used in node.exports.iteritems() :
+		for e, used in node.exports.items() :
 			if used == 0 : # the used ones are already added above
 				cur.execute ('INSERT INTO Symbols VALUES(?,?,?)', (e, None, sm))
 	con.commit ()
@@ -1031,7 +1035,7 @@ def ImportDump (sfDump, deps) :
 				curEdge = None
 				symbols = []
 			k = m.group(0)
-			if k in deps.keys() :
+			if k in list(deps.keys()) :
 				curNode = deps[k]
 			else :
 				curNode = deps[k] = Node (k, 0) # Todo: depth?
@@ -1049,7 +1053,7 @@ def ImportDump (sfDump, deps) :
 						symbols = []
 					curEdge = m.group(2)
 					# have to create the node, too
-					if not curEdge in deps.keys() :
+					if not curEdge in list(deps.keys()) :
 						deps[curEdge] = Node(curEdge, curNode.depth+1)
 			else :
 				m = rSym.match (s)
@@ -1246,7 +1250,7 @@ For more information read the source.
 			else :
 				GetDepsPosix (s, deps, nMaxDepth)
 		# with a bit dirty condition, try to populate from .dump
-		if len(deps.keys()) == 1 and len(components) == 1:
+		if len(list(deps.keys())) == 1 and len(components) == 1:
 			deps = ImportDump (components[0], deps)
 			RecalculateDepth (deps)
 
@@ -1264,7 +1268,7 @@ For more information read the source.
 	while nCutLeafs > 0 :
 		# not always iterating here, CutLeafs does too
 		if bDump :
-			nTotal = len(deps.keys())
+			nTotal = len(list(deps.keys()))
 			leafs = CutLeafs (deps, 1)
 			if len(leafs) < 1 :
 				break
@@ -1288,17 +1292,17 @@ For more information read the source.
 			f2 = open (sOutFilename + ".reduced.txt", "w")
 		Reduce (deps, f2)
 		if nCutLeafs > 1000 : # magic number two, still infinite ;)
-			for d in deps.keys() :
+			for d in list(deps.keys()) :
 				# kind of arbitrary numbers
-				n1 = len(deps[d].deps.keys()) # lthis ones dependencies
-				n2 = len(deps.keys()) # total number of components left
+				n1 = len(list(deps[d].deps.keys())) # lthis ones dependencies
+				n2 = len(list(deps.keys())) # total number of components left
 				# write erros/warning like the compiler would do
 				f2.write ("%s - %d error(s), %d warning(s)\n" % (deps[d].name, n1, n2))
 	if bTred :
 		tops = TopMost (deps)
 		if len(tops) == 0 :
 			print("Transitive reduction without topmost!")
-			tops = deps.keys ()
+			tops = list(deps.keys ())
 		TransitiveReduction (deps, tops)
 
 	if sPickle :
@@ -1330,14 +1334,14 @@ For more information read the source.
 
 def SaveXml (deps, f) :
 	"simple XML dump"
-	f.write('<nodes count="%d">\n' % (len(deps.keys())))
+	f.write('<nodes count="%d">\n' % (len(list(deps.keys()))))
 	f.write('\t'*1 + '<command>wdeps.py ' + string.join (sys.argv[1:], ' ') + '</command>\n')
-	deps_keys = deps.keys()
+	deps_keys = list(deps.keys())
 	deps_keys.sort()
 	for sn in deps_keys :
 		node = deps[sn]
 		f.write('\t'*1 + '<node name="%s" symbols="%d">\n' % (sn, len(node.exports)))
-		edge_keys = node.deps.keys()
+		edge_keys = list(node.deps.keys())
 		if edge_keys :
 			edge_keys.sort()
 			f.write('\t'*2 + '<edges count="%d">\n' % (len(edge_keys)))
@@ -1357,11 +1361,11 @@ def SaveXml (deps, f) :
 
 def SaveDt (deps, f) :
 	""" see: http://dtangler.org """
-	deps_keys = deps.keys()
+	deps_keys = list(deps.keys())
 	deps_keys.sort()
 	for sn in deps_keys :
 		node = deps[sn]
-		edge_keys = node.deps.keys()
+		edge_keys = list(node.deps.keys())
 		if not edge_keys :
 			continue
 		edge_keys.sort()
@@ -1376,25 +1380,25 @@ def SaveDot (deps, sGraph, bByUse, nSymbols, f) :
 	if bByUse :
 		# kind of inverted diagram not showing edependencies but 'users'
 		users = {}
-		for sn in deps.keys() :
+		for sn in list(deps.keys()) :
 			users[sn] = []
-		for sn in deps.keys() :
+		for sn in list(deps.keys()) :
 			node = deps[sn]
-			for se in node.deps.keys() :
+			for se in list(node.deps.keys()) :
 				edge = node.deps[se]
 				users[edge.name].append(node.name)
-		for sn in users.keys() :
+		for sn in list(users.keys()) :
 			for s in users[sn] :
 				f.write ('"%s" -> "%s"\n' % (sn, s))
 	else :
 		# first pass mark don't follows
 		dontFollowsDone = {}
 		urlsDone = {}
-		deps_keys = deps.keys()
+		deps_keys = list(deps.keys())
 		deps_keys.sort()
 		for sn in deps_keys :
 			node = deps[sn]
-			edge_keys = node.deps.keys()
+			edge_keys = list(node.deps.keys())
 			edge_keys.sort()
 			for se in edge_keys :
 				cut_len = len(se)
@@ -1417,7 +1421,7 @@ def SaveDot (deps, sGraph, bByUse, nSymbols, f) :
 		for sn in deps_keys :
 			# write weighted edges, could also classify the nodes ...
 			node = deps[sn]
-			edge_keys = node.deps.keys()
+			edge_keys = list(node.deps.keys())
 			edge_keys.sort()
 			for se in edge_keys :
 				edge = node.deps[se]

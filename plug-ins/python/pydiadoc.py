@@ -21,6 +21,7 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import str
 import sys, math, dia, types, string
 
 def distribute_objects (objs) :
@@ -101,7 +102,7 @@ def autodoc_cb (data, flags, update) :
 	for s in ["Standard - Image", "Standard - BezierLine", "Standard - Text", 
 		"UML - Class", "UML - Dependency"] :
 		o, h1, h2 = dia.get_object_type(s).create(0,0)
-		for p in o.properties.keys() :
+		for p in list(o.properties.keys()) :
 			v = o.properties[p].value
 			theObjects.append(v)
 			if type(v) is tuple and len(v) > 0 :

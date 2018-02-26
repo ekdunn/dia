@@ -1,3 +1,4 @@
+from __future__ import print_function
 # Generates a weighted dependencies graph from DLLs
 # Copyright (c) 2001, 2005, 2007 Hans Breuer <hans@breuer.org>
 
@@ -86,7 +87,7 @@ class Node :
 	def AddExports (self, symbols, used=0) :
 		''' remember the symbols this node exports (and their use)'''
 		for s in symbols :
-			if self.exports.has_key(s) :
+			if s in self.exports :
 				self.exports[s] += used
 			else :
 				self.exports[s] = used
@@ -126,11 +127,11 @@ def GetDepsDotnet (sFrom, dAll, node, nMaxDepth, nDepth=0) :
 		import clr
 		clr.AddReference("IronPython")
 	except ImportError :
-		print "No Iron!"
+		print("No Iron!")
 		return
 	from System.Reflection import Assembly
 
-	if not dAll.has_key (sFrom) or node :
+	if sFrom not in dAll or node :
 		if not node :
 			node = Node (sFrom, nDepth)
 			dAll[sFrom] = node
@@ -166,7 +167,7 @@ def GetDepsDotnet (sFrom, dAll, node, nMaxDepth, nDepth=0) :
 		refs = assembly.GetReferencedAssemblies()
 		for r in refs :
 			n2 = r.Name + ".dll";
-			print "\t" * nDepth + n2, r.Version
+			print("\t" * nDepth + n2, r.Version)
 			symbols = [ "[" + str(r.Version) + "]" ]
 			node.AddEdge (n2, symbols, 1) # delayLoad: kind of
 			GetDepsDotnet (n2, dAll, None, nMaxDepth, nDepth+1)
@@ -180,7 +181,7 @@ def GetDepsWin32 (sFrom, dAll, nMaxDepth, nDepth=0) :
 	if sFrom in g_DontFollow :
 		dAll[sFrom] = Node (sFrom, nDepth) # needed here so other algoritm can remove it ;)
 		return
-	if not dAll.has_key (sFrom) :
+	if sFrom not in dAll :
 		node = Node (sFrom, nDepth)
 		sPath = sFrom
 		if g_path :
@@ -234,7 +235,7 @@ def GetDepsWin32 (sFrom, dAll, nMaxDepth, nDepth=0) :
 
 		# check for dotnet dependencies
 		if "mscoree.dll" in directDeps :
-			print "Dotnet check ...", sFrom
+			print("Dotnet check ...", sFrom)
 			GetDepsDotnet (sFrom, dAll, node, nMaxDepth-nDepth+2, nDepth+1)
 
 		# restore original depth (independent of how the recursion works)
@@ -242,8 +243,8 @@ def GetDepsWin32 (sFrom, dAll, nMaxDepth, nDepth=0) :
 			if sd in dAll.keys() :
 				try :
 					dAll[sd].depth = nDepth + 1 
-				except AttributeError, msg :
-					print "FIXME:", sd, msg
+				except AttributeError as msg :
+					print("FIXME:", sd, msg)
 	
 def GetDepsPosix (sFrom, dAll, nMaxDepth, nDepth=0) :
 	"calculates the dependents of the passed in so"
@@ -256,7 +257,7 @@ def GetDepsPosix (sFrom, dAll, nMaxDepth, nDepth=0) :
 		dAll[sFromName] = Node (sFromName, nDepth) # needed here so other algoritm can remove it ;)
 		return
 	if not sFromName in dAll.keys() :
-		print "Creating", sFromName, nDepth
+		print("Creating", sFromName, nDepth)
 		node = Node (sFromName, nDepth)
 		sPath = sFrom
 		#TODO: work with relative pathes? Current dir?
@@ -286,7 +287,7 @@ def GetDepsPosix (sFrom, dAll, nMaxDepth, nDepth=0) :
 			else :
 				mi = re.match("\s+U (\S+)", si)
 				if mi :
-					print mi.group(1)
+					print(mi.group(1))
 					dImports[mi.group(1)] = 1
 		toRecurse = []
 		for s in sModules :
@@ -325,11 +326,11 @@ def GetDepsPosix (sFrom, dAll, nMaxDepth, nDepth=0) :
 						sToPath = r.group("path")
 						node.AddEdge(sToPath[sToPath.rfind('/')+1:], usedSymbols, 0)
 					toRecurse.append(r.group("path"))
-					print sFromName, "(", nDepth, "):", r.group("path")
+					print(sFromName, "(", nDepth, "):", r.group("path"))
 		# add to all nodes
 		dAll[sFromName] = node
 		for sd in toRecurse :
-			print sFromName, "->", sd, "level:", nDepth+1
+			print(sFromName, "->", sd, "level:", nDepth+1)
 			sdn = os.path.split(sd)[-1]
 			GetDepsPosix (sd, dAll, nMaxDepth-nDepth+2, nDepth+1)
 			if sdn in dAll.keys() :
@@ -342,11 +343,11 @@ def IsWin32 () :
 def Remove (deps, list) :
 	"From the deps tree remove the nodes matching list"
 	for s in list :
-		if deps.has_key (s) :
+		if s in deps :
 			del deps[s]
 		for sn in deps.keys() :
 			node = deps[sn]
-			if node.deps.has_key (s) :
+			if s in node.deps :
 				del node.deps[s]
 def RemoveRegEx (deps, reg_ex) :
 	"If a module matches reg_ex remove it"
@@ -414,9 +415,9 @@ def Reduce (deps, f, bHintOnly = 1) :
 		node = deps[k]
 		for c in node.deps.keys () :
 			edge = node.deps[c]
-			if deps.has_key (c) :
+			if c in deps :
 				node2 = deps[c]
-				if node2.deps.has_key(k) :
+				if k in node2.deps :
 					edge2 = node2.deps[k]
 					# if one already is reduced dont do it again
 					if edge.reduce or edge2.reduce :
@@ -433,8 +434,8 @@ def Reduce (deps, f, bHintOnly = 1) :
 							edge.reduce = 1
 							edge2.reduce = 1
 						else :
-							if node.deps.has_key(c) : del node.deps[c]
-							if node2.deps.has_key(k) : del node2.deps[k]
+							if c in node.deps : del node.deps[c]
+							if k in node2.deps : del node2.deps[k]
 						nReduced += (n + n2)
 					elif n > n2 :
 						f.write ("Remove (" + str(n2) + ") " + edge.name + " -> " + edge2.name +
@@ -442,7 +443,7 @@ def Reduce (deps, f, bHintOnly = 1) :
 						if bHintOnly :
 							edge2.reduce = 1
 						else :
-							if node2.deps.has_key(k) : del node2.deps[k]
+							if k in node2.deps : del node2.deps[k]
 						nReduced += n2
 					else : 
 						f.write("Remove (" + str(n) + ") " + edge2.name + " -> " + edge.name + 
@@ -450,7 +451,7 @@ def Reduce (deps, f, bHintOnly = 1) :
 						if bHintOnly :
 							edge.reduce = 1
 						else :
-							if node.deps.has_key(c) : del node.deps[c]
+							if c in node.deps : del node.deps[c]
 						nReduced += n
 	f.write("Remove total: %d\n" % (nReduced))
 
@@ -473,13 +474,13 @@ def CutLeafs (deps, nCuts) :
 		for k in deps.keys() :
 			node = deps[k]
 			for c in leafs.keys() :
-				if node.deps.has_key(c) :
+				if c in node.deps :
 					leafs[c] += 1
 					del node.deps[c]
 		# third pass: remove the leafs
 		for k in leafs.keys() :
 			# we either need to reset leafs in every round or 
-			if deps.has_key(k) :
+			if k in deps :
 				del deps[k]
 	if len(leafs.keys()) > 0 :
 		return leafs.keys()
@@ -500,7 +501,7 @@ def TransitiveReduction (deps, tops, treds=[]) :
 		extra_syms = {}
 		for c in cs.keys() :
 			if c in bs :
-				print "Cut", a, "->", c
+				print("Cut", a, "->", c)
 				# we need to know which edge a->b is taking the extra symbols
 				extra_syms[c] = deps[a].deps[c].symbols
 				del deps[a].deps[c]
@@ -510,7 +511,7 @@ def TransitiveReduction (deps, tops, treds=[]) :
 			bs = deps[a].deps.keys() # they are reduced above
 			for b in bs :
 				if e in deps[b].deps.keys () :
-					print "Adjust", a, "->", b, "+", len(extra_syms[e]), "from", e
+					print("Adjust", a, "->", b, "+", len(extra_syms[e]), "from", e)
 					#NOT: deps[a].deps[b].symbols.extend(extra_syms[e]) # producing duplicates
 					for s in extra_syms[e] :
 						if not s in deps[a].deps[b].symbols :
@@ -519,7 +520,7 @@ def TransitiveReduction (deps, tops, treds=[]) :
 					break
 		#FIXME: something we have cut before may not be visible anymore (would need a deeper search or an ordered reduction)
 		if len(extra_syms.keys()) :
-			print "Not adjusted:", a, "->", string.join(extra_syms.keys(), ", ")
+			print("Not adjusted:", a, "->", string.join(extra_syms.keys(), ", "))
 	# recurse into remaining bs
 	for a in tops :
 		bs = deps[a].deps.keys()
@@ -533,10 +534,10 @@ def TopMost (deps) :
 	used = {}
 	for k in keys :
 		for d in deps[k].deps.keys() :
-			if not used.has_key (d) :
+			if d not in used :
 				used[d] = 1
 	for k in keys :
-		if not used.has_key (k) :
+		if k not in used :
 			topmost.append (k)
 	return topmost
 
@@ -579,7 +580,7 @@ def UnGlob (comps) :
 	for p in comps :
 		g = glob.glob (p)
 		for d in g :
-			if not comp_dict.has_key (d) :
+			if d not in comp_dict :
 				comp_dict[d] = 1
 	return comp_dict.keys()
 
@@ -667,14 +668,14 @@ def ParseRegexTheme (fname) :
 				sr = re.compile(m.group('regex'))
 				sc = m.group('color')
 				colorMatcher.append ((sr, sc))
-			except re.error, msg :
-				print "Parser error\n", s
+			except re.error as msg :
+				print("Parser error\n", s)
 				sys.exit(2)
 	if len(colorMatcher) == 0 :
-		print "no colors parsed:", fname
+		print("no colors parsed:", fname)
 		sys.exit(3)
 	else :
-		print len(colorMatcher), "colors parsed:", fname
+		print(len(colorMatcher), "colors parsed:", fname)
 
 def LookupColor (node) :
 	'''Used to tint the nodes by layer '''
@@ -689,11 +690,11 @@ def LookupColor (node) :
 	# tinting by palette
 	try :
 		return tangoColors[node.depth]
-	except KeyError, msg :
-		print msg
+	except KeyError as msg :
+		print(msg)
 		return "#ef2929" # scarlet red
-	except IndexError, msg :
-		print "Dependency", node.name, 'level', node.depth
+	except IndexError as msg :
+		print("Dependency", node.name, 'level', node.depth)
 		return "#cc0000" # scarlet ret (a bit darker)
 
 def DumpSymbols (deps, f) :
@@ -723,19 +724,19 @@ def DumpSymbols (deps, f) :
 			syms.sort()
 			for sy in syms :
 				f.write ("\t\t" + sy + "\n")
-				if Symbols.has_key(sy) : 
+				if sy in Symbols : 
 					Symbols[sy] += 1 
 				else : 
 					Symbols[sy] = 1
 			Imports[sn] += len(syms)
-			if Modules.has_key (edge.name) :
+			if edge.name in Modules :
 				Modules[edge.name].append (node.name)
 			else :
 				Modules[edge.name] = [node.name]
 	# symbols used by many modules are good candidates for refactoring
 	f.write ( "***** Modules with users (symbols) *****\n" )
 	for s, i in Sorted (Imports) :
-		if Modules.has_key (s) :
+		if s in Modules :
 			f.write (s + " (" + str(i) + ") : " + string.join (Modules[s], ",") + "\n")
 		else :
 			f.write (s + " (0) : <no users>\n")
@@ -817,7 +818,7 @@ def RemoveStrays (deps) :
 					del strays[d]
 	stray_keys = strays.keys()
 	for k in stray_keys :
-		print "Stray:", k
+		print("Stray:", k)
 		del deps[k]
 
 def CreateDsm (deps) :
@@ -856,7 +857,7 @@ def CreateDsm (deps) :
 			for num in range(1, len(deps.keys())+1) :
 				if num in histo.keys() :
 					leafs = histo[num]
-					print "Circular cut:", leafs
+					print("Circular cut:", leafs)
 					break
 		for sn in leafs :
 			table_map[sn] = (nTotal - nDone, level)
@@ -1008,7 +1009,7 @@ def CreateList (s) :
 	return lst
 
 def ImportDump (sfDump, deps) :
-	print "Import from:", sfDump
+	print("Import from:", sfDump)
 	global g_DontFollow
 	deps = {}
 	f = open (sfDump)
@@ -1038,7 +1039,7 @@ def ImportDump (sfDump, deps) :
 			m = rEdge.match(s)
 			if m :
 				if not curNode.name == m.group(1) :
-					print "???", s
+					print("???", s)
 					sys.exit(2)
 				else :
 					if curNode and curEdge and len(symbols) :
@@ -1095,7 +1096,7 @@ def main () :
 		#	print "The script needs to be called from a 'VS command prompt'"
 		#	sys.exit (1)
 		if FindInPath ("dumpbin.exe") == "dumpbin.exe" :
-			print "dumpbin.exe not found"
+			print("dumpbin.exe not found")
 			sys.exit (1)
 	for arg in sys.argv[1:] :
 		if string.find (arg, "--remove") == 0 :
@@ -1118,7 +1119,7 @@ def main () :
 			g_DontFollow.extend (noFollow)
 		elif string.find (arg, "--depth=") == 0 :
 			nMaxDepth = int(arg[len("--depth="):])
-			if nMaxDepth < 1 : print  "Wrong depth"; sys.exit(1)
+			if nMaxDepth < 1 : print("Wrong depth"); sys.exit(1)
 		elif string.find (arg, "--symbols=") == 0 :
 			nSymbols = int(arg[len("--symbols="):])
 			if nSymbols < 0 : nSymbols = 0
@@ -1165,10 +1166,10 @@ def main () :
 			if theme == 'regex' :
 				ParseRegexTheme('wdeps.tinting')
 			else :
-				print "Unknown theme!"
+				print("Unknown theme!")
 				sys.exit(1)
 		elif string.find (arg, "--") == 0 :
-			print "Unknown option or missing parameter:", arg
+			print("Unknown option or missing parameter:", arg)
 			sys.exit(1)
 		else :
 			if len(components) == 0 :
@@ -1176,15 +1177,15 @@ def main () :
 				components = UnGlob (components)
 				# don't GetDeps here cause we need to first evaluate *all* parameters
 				if len(components) == 0 :
-					print "No DLL input found - wrong directory?"
+					print("No DLL input found - wrong directory?")
 					break
 				sGraph = components[0]
 			elif len(arg)>0 :
 				sOutFilename = arg
-		print "arg is:", arg 
+		print("arg is:", arg) 
 	if len(sys.argv) < 2 :
-		print sys.argv[0], "[parameters] <component,s> [dot-output]"
-		print """
+		print(sys.argv[0], "[parameters] <component,s> [dot-output]")
+		print("""
 Given one or mores starting components like
 
 	a.dll,another.dll
@@ -1221,7 +1222,7 @@ Finally there is the switch --dump for people prefering the textual
 representation over some graph.
 
 For more information read the source.
-"""
+""")
 		sys.exit(0)
 
 	# output ...
@@ -1237,7 +1238,7 @@ For more information read the source.
 	try :
 		import pickle
 		deps = pickle.load (open(sPickle))
-		print "Input from", sPickle
+		print("Input from", sPickle)
 	except :
 		for s in components:
 			if IsWin32() :
@@ -1296,7 +1297,7 @@ For more information read the source.
 	if bTred :
 		tops = TopMost (deps)
 		if len(tops) == 0 :
-			print "Transitive reduction without topmost!"
+			print("Transitive reduction without topmost!")
 			tops = deps.keys ()
 		TransitiveReduction (deps, tops)
 
@@ -1403,12 +1404,12 @@ def SaveDot (deps, sGraph, bByUse, nSymbols, f) :
 					cut_len = string.find(se, ".so") 
 				ses = se[:cut_len]
 				if se in g_DontFollow :
-					if not dontFollowsDone.has_key(se) :
+					if se not in dontFollowsDone :
 						# mark as such
 						f.write ('"%s" [style=filled,fillcolor="lightgray"]\n' % (se,))
 						dontFollowsDone[se] = 1
 				else :
-					if not urlsDone.has_key (se) :
+					if se not in urlsDone :
 						f.write ('"%s" [style=filled,fillcolor="%s",URL="#%s"]\n' % (se, LookupColor(deps[se]), se))
 						urlsDone[se] = 1
 						

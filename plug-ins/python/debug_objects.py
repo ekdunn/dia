@@ -1,4 +1,5 @@
 from __future__ import print_function
+from builtins import str
 import sys, dia
 
 # sys.path.insert(0, 'd:/graph/dia/dia')
@@ -16,7 +17,7 @@ def dia_debug_props_cb (data, flags) :
 		for o in layer.objects :
 			print(str(o))
 			props = o.properties
-			for s in props.keys() :
+			for s in list(props.keys()) :
 				print(props[s].type + " " + s + " (visible=%d)" % props[s].visible)
 				try :
 					p = props[s].value

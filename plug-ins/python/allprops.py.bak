@@ -1,3 +1,4 @@
+from __future__ import print_function
 #    PyDia Self Documentation Series - Part IV : All Objects Properties
 #    Copyright (c) 2008, Hans Breuer <hans@breuer.org>
 #
@@ -39,19 +40,19 @@ def allprops_cb(data, flags) :
 		try :
 			obj, h1, h2 = dia.get_object_type(oname).create (0, 0)
 		except :
-			print "Huh?", oname
+			print("Huh?", oname)
 			continue
 		prop_keys = obj.properties.keys()
 		for k in prop_keys :
 			p = obj.properties[k]
-			if props_by_name.has_key(k) :
+			if k in props_by_name :
 				# check if it is the same type
 				p0, names = props_by_name[k]
 				try :
 					if p0.type != p.type :
 						# construct a unique name
 						uname = p.name + "<" + p.type + ">"
-						if props_by_name.has_key(uname) :
+						if uname in props_by_name :
 							props_by_name[uname][1].append(oname)
 						else :
 							props_by_name[uname] = (p, [oname])
@@ -60,7 +61,7 @@ def allprops_cb(data, flags) :
 						# remember the origin of the property
 						props_by_name[k][1].append(oname)
 				except KeyError :
-					print oname, "::", k, p, "?"
+					print(oname, "::", k, p, "?")
 			else :
 				props_by_name[k] = (p, [oname])
 		obj.destroy() # unsave delete, any method call will fail/crash afterweards
@@ -84,7 +85,7 @@ def allprops_cb(data, flags) :
 
 		x = 0.0
 		y = 0.0
-		if grid.has_key(p.type) :
+		if p.type in grid :
 			x, y = grid[p.type]
 		else :
 			x = 0.0

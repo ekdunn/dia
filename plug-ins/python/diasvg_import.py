@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 #  PyDia SVG Import
 #  Copyright (c) 2003, 2004 Hans Breuer <hans@breuer.org>
 #
@@ -25,6 +26,10 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import string, math, os, re
 
 # Dias unit is cm, the default scale should be determined from svg:width and viewBox
@@ -34,8 +39,8 @@ dfFontSize = 0.7
 dfViewLength = 32.0 # wrong approach for "% unit" 
 dictUnitScales = {
 	"em" : 1.0, "ex" : 2.0, #FIXME these should be _relative_ to current font
-	"px" : 1.0 / dfPcm, "pt" : 1.25 / dfPcm, "pc" : 15.0 / dfPcm, 
-	"cm" : 35.43307 / dfPcm, "mm" : 3.543307 / dfPcm, "in" : 90.0 / dfPcm}
+	"px" : old_div(1.0, dfPcm), "pt" : old_div(1.25, dfPcm), "pc" : old_div(15.0, dfPcm), 
+	"cm" : old_div(35.43307, dfPcm), "mm" : old_div(3.543307, dfPcm), "in" : old_div(90.0, dfPcm)}
 
 # only compile once
 rColor = re.compile(r"rgb\s*\(\s*(\d+)[, ]+(\d+)[, +](\d+)\s*\)")
@@ -69,7 +74,7 @@ def Color(s) :
 	# deliver a StdProp compatible Color (or the original string)
 	m = rColor.match(s)
 	if m :
-		return (int(m.group(1)) / 255.0, int(m.group(2)) / 255.0, int(m.group(3)) / 255.0, 1.0)
+		return (old_div(int(m.group(1)), 255.0), old_div(int(m.group(2)), 255.0), old_div(int(m.group(3)), 255.0), 1.0)
 	# any more ugly color definitions not compatible with pango_color_parse() ?
 	return string.strip(s)
 def _eval (s, _locals) :
@@ -84,7 +89,7 @@ def _eval (s, _locals) :
 		except ImportError :
 			print("***Possible exploit***:", s)
 	return None
-class Object :
+class Object(object) :
 	def __init__(self) :
 		self.props = {"x" : 0, "y" : 0, "stroke" : "none"}
 		self.translation = None
@@ -154,7 +159,7 @@ class Object :
 	def CopyProps(self, dest) :
 		# to be used to inherit group props to childs _before_ they get their own
 		# doesn't use the member functions to avoid scaling once more
-		for p in self.props.keys() :
+		for p in list(self.props.keys()) :
 			dest.props[p] = self.props[p]
 	def Create(self) :
 		ot = dia.get_object_type (self.dt)
@@ -234,11 +239,11 @@ class Svg(Object) :
 		# FIXME: the following relies on the call order of width,height,viewBox
 		# which is _not_ the order it is in the file
 		if self.bbox_w and self.bbox_h :
-			dfUserScale = math.sqrt((self.bbox_w / w)*(self.bbox_h / h))
+			dfUserScale = math.sqrt((old_div(self.bbox_w, w))*(old_div(self.bbox_h, h)))
 		elif self.bbox_w :
-			dfUserScale = self.bbox_w / w
+			dfUserScale = old_div(self.bbox_w, w)
 		elif self.bbox_h :
-			dfUserScale = self.bbox_h / h
+			dfUserScale = old_div(self.bbox_h, h)
 		# FIXME: ugly, simple aproach to "%" unit
 		dfViewLength = math.sqrt(w*h)
 	def xmlns(self,s) :
@@ -579,7 +584,7 @@ class Unknown(Object) :
 	def Create(self) :
 		return None
 
-class Importer :
+class Importer(object) :
 	def __init__(self) :
 		self.errors = {}
 		self.objects = []
@@ -676,10 +681,10 @@ class Importer :
 				layer.add_object(od)
 		# create an 'Unhandled' layer and dump our Unknown
 		# create an 'Errors' layer and dump our errors
-		if len(self.errors.keys()) > 0 :
+		if len(list(self.errors.keys())) > 0 :
 			layer = data.add_layer("Errors")
 			s = "To hide the error messages delete or disable the 'Errors' layer\n"
-			for e in self.errors.keys() :
+			for e in list(self.errors.keys()) :
 				s = s + str(e) + " -> " + str(self.errors[e]) + "\n"
 		
 			o = Text()
@@ -692,7 +697,7 @@ class Importer :
 	def Dump(self) :
 		for o in self.objects :
 			o.Dump(0)
-		for e in self.errors.keys() :
+		for e in list(self.errors.keys()) :
 			print(e, "->", self.errors[e])
 
 def Test() :

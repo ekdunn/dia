@@ -15,9 +15,10 @@
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from builtins import object
 import dia, sys, os.path, string
 
-class ObjRenderer :
+class ObjRenderer(object) :
 	def __init__ (self) :
 		self.f = None
 		# the bintmap exporters calculate their ow margins from the bunding box

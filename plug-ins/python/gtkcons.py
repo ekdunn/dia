@@ -28,6 +28,7 @@
 # have access to the list __history__, which is the command history.
 
 from __future__ import print_function
+from builtins import object
 import sys, string, traceback
 
 # Make sure we use pygtk for gtk 2.0
@@ -67,7 +68,7 @@ def remQuotStr(s):
 
 def bracketsBalanced(s):
 	'''Returns true iff the brackets in s are balanced'''
-	s = filter(lambda x: x in '()[]{}', s)
+	s = [x for x in s if x in '()[]{}']
 	stack = []
 	brackets = {'(':')', '[':']', '{':'}'}
 	while len(s) != 0:
@@ -81,7 +82,7 @@ def bracketsBalanced(s):
 		s = s[1:]
 	return len(stack) == 0
 
-class gtkoutfile:
+class gtkoutfile(object):
 	'''A fake output file object.  It sends output to a TK test widget,
 	and if asked for a file number, returns one set on instance creation'''
 	def __init__(self, w, fn, tag):

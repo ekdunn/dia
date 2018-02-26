@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import division
 # PyDia DOT Import
 # Copyright (c) 2009 Hans Breuer <hans@breuer.org>
 
@@ -20,6 +21,9 @@ from __future__ import print_function
 # \file dot2dia.py \brief translate dot ( http://www.graphviz.org/ ) to Dia format
 # \ingroup ImportFilters
 
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import re, string, sys
 
 # FIXME: keywords are case indepentend
@@ -34,7 +38,7 @@ rParam = re.compile(r'(?P<key>\w+)\s*=(?P<val>(\w+)|("[^"]+")),?\s*', re.DOTALL 
 
 # units in dot are either points or inch
 cmInch = 2.54
-cmPoints = cmInch/72.0
+cmPoints = old_div(cmInch,72.0)
 # dot y up, dia y down
 
 def StripQuotes(s) :
@@ -53,7 +57,7 @@ def DictFromString (s) :
 
 ##
 # \brief Accumulating information with _DiaObject
-class Object :
+class Object(object) :
 	""" will end as a Dia Object """
 	def __init__ (self, typename, parms) :
 		self.typename = typename
@@ -145,7 +149,7 @@ class Edge(Object) :
 			print("BezPoints", pts)
 			
 def MergeParms (d, extra) :
-	for k in extra.keys() :
+	for k in list(extra.keys()) :
 		if k not in d :
 			d[k] = extra[k]
 
@@ -215,12 +219,12 @@ def ImportFile (sFile, diagramData) :
 	""" read the dot file and create diagram objects """
 	nodes, edges = Parse(sFile)
 	layer = diagramData.active_layer # can do better, e.g. layer per graph
-	for key in nodes.keys() :
+	for key in list(nodes.keys()) :
 		n = nodes[key]
 		nodeType = dia.get_object_type(n.typename) # could be optimized out of loop
 		x, y = n.Pos()
 		w, h = n.Size()
-		obj, h1, h2 = nodeType.create(x-w/2, y-h/2) # Dot pos is center, Dia (usually) uses top/left
+		obj, h1, h2 = nodeType.create(x-old_div(w,2), y-old_div(h,2)) # Dot pos is center, Dia (usually) uses top/left
 		# resizing the Ellipse by handle is screwed
 		# obj.move_handle(h2, (x+w/2, y+h/2), 0, 0) # resize the object
 		obj.properties["elem_width"] = w
@@ -243,7 +247,7 @@ def ImportFile (sFile, diagramData) :
 		if 'style' in e.parms : # set line style
 			con.properties['line_style'] = (4, 0.5) #FIXME: hard-coded dotted
 		if 'weight' in e.parms :
-			con.properties['line_width'] = float(e.parms['weight']) / 10.0 # arbitray anyway
+			con.properties['line_width'] = old_div(float(e.parms['weight']), 10.0) # arbitray anyway
 		layer.add_object(con)
 		if e.src in nodes :
 			h = con.handles[0]
@@ -262,7 +266,7 @@ def ImportFile (sFile, diagramData) :
 			AddLabel (layer, e.LabelPos(), e.parms['label'], e.FontSize())
 	diagram = None # FIXME: get it
 	if diagram :
-		for n, o in nodes.iteritems() :
+		for n, o in nodes.items() :
 			diagram.update_connections(o)
 		diagram.update_extents()
 	return diagramData
@@ -270,7 +274,7 @@ def ImportFile (sFile, diagramData) :
 if __name__ == '__main__': 
 	# just testing at the moment
 	nodes, edges = Parse(sys.argv[1])
-	for k, n in nodes.iteritems() :
+	for k, n in nodes.items() :
 		print("Name:", n.name, "Pos:", n.Pos(), "WxH:", n.Size())
 	for e in edges :
 		print(e.src, "->", e.dest, e.LabelPos(), e.parms)

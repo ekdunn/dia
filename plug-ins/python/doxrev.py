@@ -37,13 +37,16 @@
 #
 
 from __future__ import print_function
+from builtins import str
+from builtins import range
+from builtins import object
 import glob, os, string
 
 # debug spew
 g_verbose = 0
 
 # base class, not a tag
-class Element :
+class Element(object) :
 	def __init__ (self) :
 		self.name = ""
 		self.kind = ""
@@ -75,7 +78,7 @@ class Element :
 		# just a copy of the tags attributes
 		if self.__class__.__name__ == string.capitalize(name) :
 			self.attrs = attrs
-		elif len(attrs.keys()) > 0 :
+		elif len(list(attrs.keys())) > 0 :
 			if g_verbose :
 				print("Ignoring", name, "attrs on", self.kind)
 	def Dump (self) :
@@ -274,7 +277,7 @@ class Parameterlist(Element) :
 		pass
 	def Dump (self) :
 		pass
-class Comment :
+class Comment(object) :
 	"Base class for all kinds of comment 'tags', maybe at some point they should be distinguishable?"
 	def __init__ (self) :
 		self.kind = "comment"
@@ -456,7 +459,7 @@ else :
 
 			layer.add_object(o)
 		# create the links (inhertiance, maybe containement, refernces, factory, ...)
-		for s in class_map.keys () :
+		for s in list(class_map.keys ()) :
 			c, o = class_map[s]
 			print(s, c, c.bases)
 			for b in c.bases :

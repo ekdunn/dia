@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+from builtins import map
+from builtins import object
 import string
 
 MOVE_TO = 0
@@ -11,7 +13,7 @@ VLINE_TO = 4
 SMOOTHCURVE_TO = 5
 CLOSE = 6
 
-class Component:
+class Component(object):
 	def __init__(self, type, point1=None, point2=None, point3=None):
 		self.type = type
 		self.point1 = point1
@@ -185,7 +187,7 @@ def parse_bpath(bpath):
 
 def print_bpath(bpath):
 	p = parse_bpath(bpath)
-	map(Component.dump, p)
+	list(map(Component.dump, p))
 
 if __name__ == '__main__':
 	import sys

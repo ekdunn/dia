@@ -41,7 +41,7 @@ def otypes_cb(data, flags) :
 	layer = data.active_layer
 
 	otypes = dia.registered_types()
-	keys = otypes.keys()
+	keys = list(otypes.keys())
 	keys.sort()
 
 	# property keys w/o overlap
@@ -77,7 +77,7 @@ def otypes_cb(data, flags) :
 	maxy = 0
 	maxx = 0
 
-	for sp in packages.keys() :
+	for sp in list(packages.keys()) :
 		pkg = packages[sp]
 		op, h1, h2 = dtp.create(0.0, cy + 1.0)
 		op.properties["name"] = sp
@@ -106,7 +106,7 @@ def otypes_cb(data, flags) :
 				print("Failed to create object", sp, st)
 			formal_params = []
 			if not o_real is None :
-				for p in o_real.properties.keys() :
+				for p in list(o_real.properties.keys()) :
 					if p in object_props : n_object = n_object + 1
 					elif p in orthconn_props : n_orthconn = n_orthconn + 1
 					elif p in element_props : n_element = n_element + 1

@@ -7,6 +7,7 @@ ToDo:
 	- parse *.c
 	
 '''
+from __future__ import print_function
 #    Copyright (c) 2006, Hans Breuer <hans@breuer.org>
 
 #    This program is free software; you can redistribute it and/or modify
@@ -49,11 +50,11 @@ class CClass :
 		self.methods = {}
 		self.signals = []
 	def AddAttr (self, name, type) :
-		if verbose : print "\t", type, name
+		if verbose : print("\t", type, name)
 		self.attrs.append ((string.strip(name), 
 					  strip_whitespace(type)))
 	def AddMethod (self, name, method) :
-		if verbose : print "\t", name, "()"
+		if verbose : print("\t", name, "()")
 		self.methods[string.strip(name)] = method
 	def AddSignal (self, name, type) :
 		self.signals.append ((string.strip(name), 
@@ -102,7 +103,7 @@ def TestStripFile (name) :
 	f = CStripCommentsAndBlankLines(name)
 	s = f.readline()
 	while s :
-		print s[:-1]
+		print(s[:-1])
 		s = f.readline()
 
 import sys
@@ -110,7 +111,7 @@ import sys
 sPkg = ''
 sDir = '.'
 if len (sys.argv) < 2 :
-	print sys.argv[0], '<package>', '[directory]'
+	print(sys.argv[0], '<package>', '[directory]')
 	sys.exit(0)
 else :
 	sPkg = sys.argv[1]
@@ -189,12 +190,12 @@ for sF in lst :
 					try :
 						klass.parent = (mV.group('name'), 
 								    string.strip(mV.group('type')))
-						if verbose : print "class", sK, ":", mV.group('type')
+						if verbose : print("class", sK, ":", mV.group('type'))
 					except :
-						print 'klass.parent error (', sF, ') :', s
+						print('klass.parent error (', sF, ') :', s)
 					s = fin.readline ()
 					mV = rVarDecl.match(s)
-					if not mV and verbose : print s 
+					if not mV and verbose : print(s) 
 					while mV :
 						klass.AddAttr (mV.group('name'), mV.group('type'))
 						s = fin.readline ()
@@ -241,11 +242,11 @@ for sF in lst :
 		if iFound == 0 :
 			no_klass_headers.append (sF)
 		else :
-			print sF + " (" + str(iFound) + ")"
+			print(sF + " (" + str(iFound) + ")")
 
 for sF in no_klass_headers :
 	fout.write ("<No Klass>: " + sF + "\n")
-print 'Klasses found:', len(klasses), '\nHeaders w/o classes:', len(no_klass_headers)
+print('Klasses found:', len(klasses), '\nHeaders w/o classes:', len(no_klass_headers))
 
 def CmpParent (a,b) :
 	'gets CClass, sort by parent type'
@@ -267,7 +268,7 @@ def CmpParent (a,b) :
 			return -1
 		return i 
 	except :
-		print "Sort Error:", str(a.parent), str(b.parent)
+		print("Sort Error:", str(a.parent), str(b.parent))
 		return 0
 
 klasses.sort(CmpParent)
@@ -280,7 +281,7 @@ for k in klasses :
 	if k.parent :
 		parents[k.parent[1]] = 1
 for k in klasses :
-	if parents.has_key(k.name) :
+	if k.name in parents :
 		del parents[k.name]
 sorted.extend(parents.keys())
 # sort the rest
@@ -305,7 +306,7 @@ while len(sorted_klasses) < len(klasses) :
 			for k in klasses :
 				if not k.name in sorted :
 					unsorted.append(k.name)
-			print string.join(unsorted, ", "), "not sorted?"
+			print(string.join(unsorted, ", "), "not sorted?")
 		break # avoid endless loop
 
 klasses = sorted_klasses
@@ -440,12 +441,12 @@ def WriteDia (fname) :
 	for klass in klasses :
 		if klass.parent : # add every parent ...
 			parentName = klass.parent[1]
-			if externals.has_key (parentName) :
+			if parentName in externals :
 				externals[parentName] += 1
 			else :
 				externals[parentName] = 1
 	for klass in klasses :
-		if externals.has_key (klass.name) : # ... but remove  the internals
+		if klass.name in externals : # ... but remove  the internals
 			del externals[klass.name]
 	
 	# write all 'external' parents
@@ -464,7 +465,7 @@ def WriteDia (fname) :
 		if klass.parent :
 			parentName = klass.parent[1]
 			connectFrom[klass.name] = (nObject, parentName)
-		if positions.has_key (parentName) :
+		if parentName in positions :
 			x = positions[parentName][0] # same x
 			y = positions[parentName][1] + dy # y below
 		else :
@@ -501,21 +502,21 @@ def WriteDia (fname) :
 	for sFrom in connectFrom.keys() :
 		iFrom = connectFrom[sFrom][0]
 		sTo = connectFrom[sFrom][1]
-		if connectFrom.has_key (sTo) :
+		if sTo in connectFrom :
 			iTo = connectFrom[sTo][0]
-		elif externals.has_key(sTo) :
+		elif sTo in externals :
 			iTo = externals[sTo][0]
 		else :
-			print "sFrom -> sTo?", sFrom, sTo
+			print("sFrom -> sTo?", sFrom, sTo)
 			continue # something wrong?
 		nObject += 1
 		#fdia.write ('\n\t<!-- %s : %s -->' % (sFrom, sTo))
 		# just to give it some position (and stop Dia complaining)
-		if positions.has_key (sTo) :
+		if sTo in positions :
 			x1, y1 = positions[sTo]
 		else :
 			x1, y1 = (dx, dy)
-		if positions.has_key (sFrom) :
+		if sFrom in positions :
 			x2, y2 = positions[sFrom]
 		else :
 			x2, y2 = (dx, dy)
@@ -530,7 +531,7 @@ def WriteDia (fname) :
 		fdia.write (sEndObject)
 
 	fdia.write (sEndDiagram)
-	print len(connectFrom.keys()), " connections"
+	print(len(connectFrom.keys()), " connections")
 
 WritePython (sPkg + "-generated.py")
 WriteDia (sPkg + "-generated.dia")

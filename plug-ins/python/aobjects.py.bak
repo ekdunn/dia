@@ -57,7 +57,7 @@ def aobjects_cb(data, flags) :
 		else :
 			sp = "<broken>"
 			st = kt[0]
-		if packages.has_key(sp) :
+		if sp in packages :
 			packages[sp].append(s)
 		else :
 			packages[sp] = [s] 

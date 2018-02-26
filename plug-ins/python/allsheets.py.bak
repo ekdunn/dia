@@ -1,3 +1,4 @@
+from __future__ import print_function
 #    PyDia Self Documentation Series - Part VII : All Sheets
 #    Copyright (c) 2014  Hans Breuer  <hans@breuer.org>
 #
@@ -28,7 +29,7 @@ def so_get_namespace (sol) :
 		if ot :
 			sp = string.split(ot.name, " - ")
 			if len(sp) > 1 :
-				if names.has_key (sp[0]) :
+				if sp[0] in names :
 					names[sp[0]] += 1
 				else :
 					names[sp[0]] = 1
@@ -45,16 +46,16 @@ def check_objecttype_overlap (sheets) :
 	missing = []
 	for sheet in sheets :
 		for ot, descr, fname in sheet.objects :
-			if types.has_key (ot.name) :
+			if ot.name in types :
 				if ot == types[ot.name] :
 					del types[ot.name]
 				else :
-					print "Mix-up:", ot.name
+					print("Mix-up:", ot.name)
 			else :
 				# sheet referencing a type not available
 				missing.append (ot.name)
 	# from the dictionary removed every type referenced just once?
-	print types
+	print(types)
 
 def isheets_cb (data, flags) :
 	sheets = dia.registered_sheets ()

@@ -1,10 +1,8 @@
-from builtins import str
-from builtins import object
 import sys, dia
 
 # sys.path.insert(0, 'd:/graph/dia/dia')
 
-class ObjRenderer(object) :
+class ObjRenderer :
 	def __init__ (self) :
 		pass
 	def begin_render (self, data, filename) :
@@ -28,7 +26,7 @@ class ObjRenderer(object) :
 				self.f.write ("\t"*2 + "</connections>\n")
 
 				self.f.write ("\t"*2 + str(o.properties) + "\n")
-				keys = list(o.properties.keys())
+				keys = o.properties.keys()
 				for s in keys :
 					self.f.write ("\t"*3 + str(o.properties[s]) + "\n")
 					if o.properties[s].type == "string" :

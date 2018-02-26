@@ -22,7 +22,7 @@
 import sys, dia, string
 
 def set_object_string (o) :
-	keys = o.properties.keys()
+	keys = list(o.properties.keys())
 	for s in keys :
 		p = o.properties[s]
 		if p.type in ["string", "text"] :
@@ -42,7 +42,7 @@ def aobjects_cb(data, flags) :
 	layer = data.active_layer
 
 	otypes = dia.registered_types()
-	keys = otypes.keys()
+	keys = list(otypes.keys())
 	keys.sort()
 
 	packages = {}
@@ -62,7 +62,7 @@ def aobjects_cb(data, flags) :
 		else :
 			packages[sp] = [s] 
 
-	for sp in packages.keys() :
+	for sp in list(packages.keys()) :
 		# add a layer per package
 		layer = data.add_layer (sp)
 

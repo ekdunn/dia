@@ -8,6 +8,7 @@ ToDo:
 	
 '''
 from __future__ import print_function
+from __future__ import division
 #    Copyright (c) 2006, Hans Breuer <hans@breuer.org>
 
 #    This program is free software; you can redistribute it and/or modify
@@ -24,6 +25,10 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from past.builtins import cmp
+from builtins import str
+from past.utils import old_div
+from builtins import object
 import glob, os, string, re
 
 verbose = 0
@@ -32,7 +37,7 @@ def strip_whitespace (s) :
 	s = string.replace (s, " ", "")
 	return string.replace (s, "\t", "")
 
-class CMethod :
+class CMethod(object) :
 	def __init__ (self, name, type) :
 		self.name = string.strip(name)
 		self.pars = []
@@ -41,7 +46,7 @@ class CMethod :
 		self.pars.append ((string.strip(name), 
 					 strip_whitespace(type)))
 
-class CClass :
+class CClass(object) :
 	def __init__ (self, name) :
 		self.name = string.strip(name)
 		self.defs = {'TYPE' : None, 'OBJECT' : None, 'CLASS' : None}
@@ -60,7 +65,7 @@ class CClass :
 		self.signals.append ((string.strip(name), 
 					    strip_whitespace(type)))
 
-class CStripCommentsAndBlankLines :
+class CStripCommentsAndBlankLines(object) :
 	def __init__ (self, name) :
 		f = open (name)
 		lines = f.readlines ()
@@ -166,11 +171,11 @@ for sF in lst :
 			sName = m.group('name')
 			unresolved[sName] = CClass (sName)
 		s = fin.readline ()
-	if len(unresolved.keys()) == 0 :
+	if len(list(unresolved.keys())) == 0 :
 		no_klass_headers.append (sF)
 	else :
 		iFound = 0
-		unresolved_keys = unresolved.keys()
+		unresolved_keys = list(unresolved.keys())
 		for sK in unresolved_keys :
 			klass = unresolved[sK]
 			sK = klass.name
@@ -283,7 +288,7 @@ for k in klasses :
 for k in klasses :
 	if k.name in parents :
 		del parents[k.name]
-sorted.extend(parents.keys())
+sorted.extend(list(parents.keys()))
 # sort the rest
 while len(sorted_klasses) < len(klasses) :
 	before = len(sorted_klasses)
@@ -327,7 +332,7 @@ def WritePython (fname) :
 			fpy.write ('\t\t # Signals\n')
 			for attr in klass.signals :
 				fpy.write ('\t\tself.' + attr[0] + " = None # " + attr[1] + "\n")
-		for s in klass.methods.keys() :
+		for s in list(klass.methods.keys()) :
 			meth = klass.methods[s]
 			fpy.write ('\t#returns: ' + meth.retval + '\n\tdef ' + meth.name + ' (')
 			s1 = ''
@@ -450,7 +455,7 @@ def WriteDia (fname) :
 			del externals[klass.name]
 	
 	# write all 'external' parents
-	for s in externals.keys() :
+	for s in list(externals.keys()) :
 		externals[s] = (nObject, -1)
 		fdia.write(sStartClass % (nObject, x, y, s))
 		positions[s] = (x,y)
@@ -484,22 +489,22 @@ def WriteDia (fname) :
 #			for attr in klass.signals :
 #				fpy.write ('\t\tself.' + attr[0] + " = None # " + attr[1] + "\n")
 		# the differnence between signals and methods is in the attributes
-		if len (klass.signals) > 0 or len(klass.methods.keys()) > 0  :
+		if len (klass.signals) > 0 or len(list(klass.methods.keys())) > 0  :
 			fdia.write (sStartOperations)
-		for s in klass.methods.keys() :
+		for s in list(klass.methods.keys()) :
 			meth = klass.methods[s]
 			fdia.write(sStartOperation % (meth.name, meth.retval))
 			# first parameter is supposed to be 'this' pointer: leave out
 			for par in meth.pars[1:] :
 				fdia.write (sDataParameter % (par[0], par[1]))
 			fdia.write (sEndOperation)
-		if len (klass.signals) > 0 or len(klass.methods.keys()) > 0  :
+		if len (klass.signals) > 0 or len(list(klass.methods.keys())) > 0  :
 			fdia.write (sEndOperations)
 		fdia.write (sEndObject)
 		nObject += 1
 
 	# write all connections
-	for sFrom in connectFrom.keys() :
+	for sFrom in list(connectFrom.keys()) :
 		iFrom = connectFrom[sFrom][0]
 		sTo = connectFrom[sFrom][1]
 		if sTo in connectFrom :
@@ -520,8 +525,8 @@ def WriteDia (fname) :
 			x2, y2 = positions[sFrom]
 		else :
 			x2, y2 = (dx, dy)
-		fdia.write (sStartConnection % (nObject, x1+dx/2, y1+dy/2,))
-		fdia.write (sOrthPoints % (x1,y1, x1,(y1+y2)/2, x2,(y1+y2)/2, x2,y2 ))
+		fdia.write (sStartConnection % (nObject, x1+old_div(dx,2), y1+old_div(dy,2),))
+		fdia.write (sOrthPoints % (x1,y1, x1,old_div((y1+y2),2), x2,old_div((y1+y2),2), x2,y2 ))
 		# and connect
 		fdia.write ('''
       <dia:connections>        
@@ -531,7 +536,7 @@ def WriteDia (fname) :
 		fdia.write (sEndObject)
 
 	fdia.write (sEndDiagram)
-	print(len(connectFrom.keys()), " connections")
+	print(len(list(connectFrom.keys())), " connections")
 
 WritePython (sPkg + "-generated.py")
 WriteDia (sPkg + "-generated.dia")

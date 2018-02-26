@@ -20,6 +20,7 @@ from __future__ import print_function
 #   along with this program; if not, write to the Free Software
 #   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+from past.builtins import cmp
 import sys, dia, string
 	
 def allprops_cb(data, flags) :
@@ -42,7 +43,7 @@ def allprops_cb(data, flags) :
 		except :
 			print("Huh?", oname)
 			continue
-		prop_keys = obj.properties.keys()
+		prop_keys = list(obj.properties.keys())
 		for k in prop_keys :
 			p = obj.properties[k]
 			if k in props_by_name :
@@ -72,7 +73,7 @@ def allprops_cb(data, flags) :
 	dy = 5.0
 	ot = dia.get_object_type("UML - Class")
 
-	props_keys = props_by_name.keys()
+	props_keys = list(props_by_name.keys())
 	# alpha-numeric sorting by type; after by number of users
 	props_keys.sort (lambda a,b : len(props_by_name[b][1]) - len(props_by_name[a][1]))
 	props_keys.sort (lambda a,b : cmp(props_by_name[a][0].type, props_by_name[b][0].type))
@@ -89,7 +90,7 @@ def allprops_cb(data, flags) :
 			x, y = grid[p.type]
 		else :
 			x = 0.0
-			y = len(grid.keys()) * dy
+			y = len(list(grid.keys())) * dy
 		o, h1, h2 = ot.create (x,y)
 		o.properties["name"] = pname
 		o.properties["template"] = 1

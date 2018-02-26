@@ -84,9 +84,9 @@ class CScaleDialog :
 		self.win.destroy ()
 
 def ScaleLens(o, factor) :
-	if o.properties.has_key("line_width") :
+	if "line_width" in o.properties :
 		o.properties["line_width"] = o.properties["line_width"].value * factor
-	if o.properties.has_key("text_height") :
+	if "text_height" in o.properties :
 		o.properties["text_height"] = o.properties["text_height"].value * factor
 
 def SimpleScale(data, factor) :
@@ -97,7 +97,7 @@ def SimpleScale(data, factor) :
 	for o in objs :
 		pos = o.properties["obj_pos"].value
 		hSE = None # the 'south east' handle to size the object
-		if o.properties.has_key("elem_width") :
+		if "elem_width" in o.properties :
 			hLR = o.handles[7] # HANDLE_RESIZE_SE
 			try :
 				#if 0 == hLR.type : # HANDLE_NON_MOVABLE
@@ -110,8 +110,8 @@ def SimpleScale(data, factor) :
 				o.move(x, y)
 				o.move_handle(hLR, (x2, y2), 0, 0)
 				ScaleLens(o, factor)
-			except RuntimeError, msg :
-				if scaleFailed.has_key(o.type.name) :
+			except RuntimeError as msg :
+				if o.type.name in scaleFailed :
 					scaleFailed[o.type.name] += 1
 				else :
 					scaleFailed[o.type.name] = 1
@@ -130,8 +130,8 @@ def SimpleScale(data, factor) :
 				for h in handles :
 					o.move_handle(h[0], h[1],  0, 0)
 				ScaleLens(o, factor)
-			except RuntimeError, msg :
-				if scaleFailed.has_key(o.type.name) :
+			except RuntimeError as msg :
+				if o.type.name in scaleFailed :
 					scaleFailed[o.type.name] += 1
 				else :
 					scaleFailed[o.type.name] = 1
