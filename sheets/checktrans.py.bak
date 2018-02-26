@@ -20,14 +20,12 @@
 #
 
 
-from __future__ import print_function
 import os,sys,string
-from functools import reduce
 try :
 	from xml.sax import saxexts
 	from xml.sax import saxlib
 except ImportError :
-	print("Missing dependencies: no translation report")
+	print "Missing dependencies: no translation report"
 	sys.exit(0)
 
 class CounterHandler(saxlib.DocumentHandler):
@@ -44,32 +42,32 @@ class CounterHandler(saxlib.DocumentHandler):
         self.namelangs = {}
 
     def warning(self,message):
-        print("W:%s:L%d:C%d: %s" % (self.locator.getSystemId(),
+        print "W:%s:L%d:C%d: %s" % (self.locator.getSystemId(),
                                     self.locator.getLineNumber(),
                                     self.locator.getColumnNumber(),
-                                    message))
+                                    message)
     def _countlang(self,name):
         locdct = self.langstk[-1]
-        if name in locdct:
+        if locdct.has_key(name):
             self.warning("duplicate description for %s, language code %s" % \
                          (self.namestk[-1],name))
             locdct[name] = locdct[name] + 1
         else:
             locdct[name] = 1
             
-        if name in self.langs:
+        if self.langs.has_key(name):
             self.langs[name] = self.langs[name] + 1
         else:
             self.langs[name] = 1                
         
     def _countnamelang(self,name):
-        if name in self.namelangs:
+        if self.namelangs.has_key(name):
             self.warning("duplicate name for sheet, language code %s" % name)
             self.namelangs[name] = self.namelangs[name] + 1
         else:
             self.namelangs[name] = 1
             
-        if name in self.langs:
+        if self.langs.has_key(name):
             self.langs[name] = self.langs[name] + 1
         else:
             self.langs[name] = 1                
@@ -80,19 +78,19 @@ class CounterHandler(saxlib.DocumentHandler):
         self.elemstk.append(name)
         if (name == "sheet") or (name == "object"):
             self.langstk.append({})
-            if 'name' in attmap:
+            if attmap.has_key('name'):
                 name = 'Object "%s"' % attmap['name']
             else:
                 name = 'Sheet "%s"' % self.locator.getSystemId()
             self.namestk.append(name)
         elif (name == "name"):
-            if "xml:lang" in attmap:
+            if attmap.has_key("xml:lang"):
                 lang = attmap["xml:lang"]
             else:
                 lang = ""
             self._countnamelang(lang)
         elif (name == "description"):
-            if "xml:lang" in attmap:
+            if attmap.has_key("xml:lang"):
                 lang = attmap["xml:lang"]
             else:
                 lang = ""
@@ -123,9 +121,9 @@ class CounterHandler(saxlib.DocumentHandler):
 ##          return res
     
 if len(sys.argv)<2:
-    print("Usage: %s <sheet.sheet>" % sys.argv[0]) 
-    print()
-    print(" <sheet.sheet>: file name of the sheet to check")
+    print "Usage: %s <sheet.sheet>" % sys.argv[0] 
+    print
+    print " <sheet.sheet>: file name of the sheet to check"
     sys.exit(1)
     
 # Load parser and driver
@@ -142,7 +140,7 @@ def make_langresult(langdict,colsize):
     langres = map(lambda s,colsize=colsize: string.ljust(s,colsize),
                   map(lambda (cc,count),total=langdict['']: 
                       ("%s:%d%%" % (cc,100*count/total)),
-                      filter(lambda cc_count: cc_count[0], langdict.items())))
+                      filter(lambda (cc,count): cc, langdict.items())))
     langres.sort()
     return langres
 
@@ -173,14 +171,14 @@ for name in fnames:
                                              string.join(langresn)))
             
         for (k,v) in ch.langs.items():
-            if k in globlangs:
+            if globlangs.has_key(k):
                 globlangs[k] = globlangs[k] + v
             else:
                 globlangs[k] = v
                 
-    except IOError as e:
+    except IOError,e:
         sys.stderr.write("E: %s: %s\n" % (name,str(e)))
-    except saxlib.SAXException as e:
+    except saxlib.SAXException,e:
         sys.stderr.write("E: %s\n" % str(e))
 
 maxlanglen = len(reduce(maxlen,globlangs.keys(),""))

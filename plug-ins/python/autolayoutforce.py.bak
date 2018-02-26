@@ -1,4 +1,3 @@
-from __future__ import print_function
 #  autolayoutforce.py - graph layout plug-in for Dia
 #
 #  Copyright (C) 2008 Frederic-Gerald Morcos <fred.mrocos@gmail.com>
@@ -53,7 +52,7 @@ def repulsion (rconst, node, other) :
 		fx = (numer * dx) / denom
 		fy = (numer * dy) / denom
 	except ZeroDivisionError :
-		print("ZeroDivisionError")
+		print "ZeroDivisionError"
 		return (0,0)
 
 	return (fx,fy)
@@ -119,7 +118,7 @@ def layout_force_cb (data, flags) :
 	data.active_layer.update_extents() # data/diagram _update_extents don't recalculate?
 	diagram.update_extents ()
 	diagram.flush()
-	print(n, "iterations")
+	print n, "iterations"
 
 dia.register_action ("LayoutForcePy", "Layout (force)", 
                      "/DisplayMenu/Test/TestExtensionStart", 

@@ -1,4 +1,3 @@
-from __future__ import print_function
 #    PyDia Self Documentation Series - Part I : PyDia itself
 #    Copyright (c) 2003, 2005 , 2009 Hans Breuer  <hans@breuer.org>
 #
@@ -104,7 +103,7 @@ def autodoc_cb (data, flags, update) :
 		for p in o.properties.keys() :
 			v = o.properties[p].value
 			theObjects.append(v)
-			if type(v) is tuple and len(v) > 0 :
+			if type(v) is types.TupleType and len(v) > 0 :
 				theObjects.append(v[0])
 		if once :
 			theObjects.append(o)
@@ -121,7 +120,7 @@ def autodoc_cb (data, flags, update) :
 	for s in theDir :
 		if s == "_dia" :
 			continue # avoid all the messy details ;)
-		if s in theTypes :
+		if theTypes.has_key(s) :
 			continue
 		for o in theObjects :
 			is_a = eval("type(o) is dia." + s)
@@ -129,7 +128,7 @@ def autodoc_cb (data, flags, update) :
 			if is_a :
 				theTypes[s] = o
 				break
-		if s not in theTypes :
+		if not theTypes.has_key (s) :
 			theTypes[s] = eval ("dia." + s)
 	# add UML classes for every object in dir
 	#print theTypes
@@ -163,7 +162,7 @@ def autodoc_cb (data, flags, update) :
 		# set the objects name
 		o.properties["name"] = s
 		# now populate the object with ...
-		if s in theTypes :
+		if theTypes.has_key(s) :
 			t = theTypes[s]
 			# ... methods and ...
 			methods = []
@@ -183,7 +182,7 @@ def autodoc_cb (data, flags, update) :
 				try :
 					is_m = eval("callable(t." + m + ")")
 				except :
-					print("type(t." + m + ")?")
+					print "type(t." + m + ")?"
 					is_m = 0
 				doc = ""
 				tt = ""
@@ -194,10 +193,10 @@ def autodoc_cb (data, flags, update) :
 							tt = eval("oo." + m + "().__class__.__name__")
 						else :
 							tt = eval("t." + m + ".__class__.__name__")
-					except TypeError as msg :
-						print(m, msg)
-					except AttributeError as msg :
-						print(m, msg) # No constructor defined
+					except TypeError, msg :
+						print m, msg
+					except AttributeError, msg :
+						print m, msg # No constructor defined
 				try :
 					# try to get the member's docstring from the type
 					doc = eval("dia." + s + "." + m + ".__doc__")

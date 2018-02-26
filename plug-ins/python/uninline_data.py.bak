@@ -1,4 +1,3 @@
-from __future__ import print_function
 #   Un-inline (i.e. save) embedded images
 #
 #   Copyright (c) 2011, Hans Breuer <hans@breuer.org>
@@ -39,7 +38,7 @@ class UninlineRenderer :
 						imgmap[key] = o
 			for k, o in imgmap.iteritems() :
 				fname = dirname + "/" + k + "." + ext
-				print(fname)
+				print fname
 				o.properties["image_file"] = fname
 				o.properties["inline_data"] = 0
 

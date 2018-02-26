@@ -20,9 +20,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 
-from __future__ import print_function
 import string,os,sys,math
-from functools import reduce
 
 collen = 1
 
@@ -85,10 +83,10 @@ def slurp_po(fname):
     return (language_name, idents, translations,fuzzies)
 
 if len(sys.argv)<3:
-    print("Usage: %s <package.pot> <lang.po> ..." % sys.argv[0])
-    print()
-    print(" <package.pot>: file name of the identifier reference to check.")
-    print(" <lang.po>: file name of the translation to check")
+    print "Usage: %s <package.pot> <lang.po> ..." % sys.argv[0]
+    print
+    print " <package.pot>: file name of the identifier reference to check."
+    print " <lang.po>: file name of the translation to check"
     sys.exit(1)
 
 def maxlen(a,b):
@@ -119,10 +117,10 @@ while trans:
     c,trans = trans[:ltnc],trans[ltnc:]
     cols.append(c)
 
-lines = map(*tuple([None]+cols))
+lines = apply(map,tuple([None]+cols))
 
 result = string.join(map(lambda l:string.join(map(NoneStr,list(l)),"  "),
                          lines),
                      "\n")
-print(result)
+print result
 

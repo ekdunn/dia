@@ -71,20 +71,20 @@ class SvgRenderer :
 	def draw_object (self, object, matrix) :
 		self.f.write("<!-- " + object.type.name + " -->\n")
 		odict = object.properties["meta"].value
-		if "url" in odict :
+		if odict.has_key("url") :
 			self.f.write('<a xlink:href="' + self._escape(odict["url"]) + '">\n')
-		if "id" in odict or matrix :
+		if odict.has_key("id") or matrix :
 			attrs = ''
 			if matrix :
 				attrs += 'transform="matrix' + str(matrix) + '" '
-			if "id" in odict :
+			if odict.has_key("id") :
 				attrs += 'id="' + self._escape(odict['id']) + '"'
 			self.f.write('<g ' + attrs + '>\n')
 		# don't forget to render the object
 		object.draw (self)
-		if "id" in odict or matrix :
+		if odict.has_key("id") or matrix :
 			self.f.write('</g>\n')
-		if "url" in odict :
+		if odict.has_key("url") :
 			self.f.write('</a>\n')
 	def set_linewidth (self, width) :
 		if width < 0.001 : # zero line width is invisible ?

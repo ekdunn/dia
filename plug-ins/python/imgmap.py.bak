@@ -51,9 +51,9 @@ class ObjRenderer :
 	def WriteAreas (self, layer, scale) :
 		for o in layer.objects :
 			r = o.bounding_box
-			if "name" in o.properties :
+			if o.properties.has_key ("name") :
 				url = o.properties["name"].value
-			elif "text" in o.properties :
+			elif o.properties.has_key ("text") :
 				url = o.properties["text"].value.text
 			else :
 				continue
@@ -61,7 +61,7 @@ class ObjRenderer :
 				continue
 
 			alt = url
-			if "comment" in o.properties :
+			if o.properties.has_key ("comment") :
 				alt = o.properties["comment"].value
 			# need to sale the original coords to the bitmap size
 			x1 = int(r.left * scale) + self.xofs

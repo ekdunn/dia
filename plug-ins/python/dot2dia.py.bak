@@ -1,4 +1,3 @@
-from __future__ import print_function
 # PyDia DOT Import
 # Copyright (c) 2009 Hans Breuer <hans@breuer.org>
 
@@ -77,7 +76,7 @@ class Node(Object) :
 			x = float(xy[0]) * cmPoints
 			y = float(xy[1]) * cmPoints
 		except :
-			print("No position on '%s'" % (self.name,))
+			print "No position on '%s'" % (self.name,)
 		return x,-y
 	def Size(self) :
 		'deliver scaled W,H coordinate'
@@ -86,7 +85,7 @@ class Node(Object) :
 			w = float(self.parms['width']) * cmInch #? maybe this is relative to the font size?
 			h = float(self.parms['height']) * cmInch
 		except :
-			print("No size on '%s'" % (self.name,))
+			print "No size on '%s'" % (self.name,)
 		return w,h
 
 ##
@@ -103,9 +102,9 @@ class Edge(Object) :
 			x = float(xy[0]) * cmPoints
 			y = float(xy[1]) * cmPoints
 		except :
-			if 'label' in self.parms :
+			if self.parms.has_key('label') :
 				# should be optional otherwise
-				print("No label pos on %s" % (self.src + '->' + self.dest,))
+				print "No label pos on %s" % (self.src + '->' + self.dest,)
 		return x, -y
 	def Pos (self) :
 		# no need to do something smart, it get adjusted anyway
@@ -113,7 +112,7 @@ class Edge(Object) :
 	def SetPoints (self, diaobj) :
 		'the property to set must match the type'
 		pts = []
-		if 'pos' in self.parms :
+		if self.parms.has_key('pos') :
 			s = self.parms['pos']
 			if s[:2] == 'e,' :
 				sp = string.split(s[2:], " ")
@@ -127,7 +126,7 @@ class Edge(Object) :
 						x = float(xy[0]) * cmPoints
 						y = float(xy[1]) * (-cmPoints)
 					except ValueError :
-						print(xy)
+						print xy
 						continue
 					bp.append((x,y))
 					# must convert to _one_ tuple 
@@ -138,15 +137,15 @@ class Edge(Object) :
 						pts.append ((2, bp[0][0], bp[0][1], bp[1][0], bp[1][1], bp[2][0], bp[2][1]))
 						bp = [] # reset
 			if len(bp) > 0 :
-				print(len(bp), "bezier points left!")
+				print len(bp), "bezier points left!"
 		if len(pts) > 1 :
 			diaobj.properties['bez_points'] = pts
 		else :
-			print("BezPoints", pts)
+			print "BezPoints", pts
 			
 def MergeParms (d, extra) :
 	for k in extra.keys() :
-		if k not in d :
+		if not d.has_key(k) :
 			d[k] = extra[k]
 
 ##
@@ -160,29 +159,29 @@ def Parse(sFile) :
 	if 0 : # debug regex
 		dbg = rDecl.findall(s)
 		for db in dbg :
-			print(db)
+			print db
 	for m in rDecl.finditer(s) :
 		if m :
 			name = StripQuotes(m.group("cmd"))
 			if name in keywords :
-				if name in extra :
+				if extra.has_key(name) :
 					MergeParms(extra[name], DictFromString(m.group("dict")))
 				else :
 					extra[name] = DictFromString(m.group("dict"))
 			else : # must be a node
 				n = Node(name, DictFromString(m.group("dict")))
-				if 'node' in extra :
+				if extra.has_key('node') :
 					MergeParms(n.parms, extra['node']) 
 				nodes[name] = n
 	for m in rEdge.finditer(s) :
 		if m :
 			# the names given are not necessarily registered as nodes already
 			defparams = {}
-			if 'node' in extra :
+			if extra.has_key('node') :
 				defparams = extra['node']
 			for k in ["n1", "n2"] :
 				name = StripQuotes(m.group(k))
-				if name in nodes :
+				if nodes.has_key(name) :
 					pass # defparms should be set above
 				else :
 					nodes[name] = Node(name, defparams)
@@ -225,11 +224,11 @@ def ImportFile (sFile, diagramData) :
 		# obj.move_handle(h2, (x+w/2, y+h/2), 0, 0) # resize the object
 		obj.properties["elem_width"] = w
 		obj.properties["elem_height"] = h
-		if 'fillcolor' in n.parms :
+		if n.parms.has_key('fillcolor') :
 			try :
 				obj.properties['fill_colour'] = n.parms['fillcolor'] # same color syntax?
 			except :
-				print("Failed to apply:", n.parms['fillcolor'])
+				print "Failed to apply:", n.parms['fillcolor']
 		layer.add_object(obj)
 		AddLabel (layer, (x,y), n.name, n.FontSize(), 1)
 		obj.properties['meta'] = n.parms # copy all (remaining) parameters
@@ -240,25 +239,25 @@ def ImportFile (sFile, diagramData) :
 		x, y = e.Pos() # just to have a start
 		con, h1, h2 = edgeType.create(x,y)
 		e.SetPoints(con)
-		if 'style' in e.parms : # set line style
+		if e.parms.has_key('style') : # set line style
 			con.properties['line_style'] = (4, 0.5) #FIXME: hard-coded dotted
-		if 'weight' in e.parms :
+		if e.parms.has_key('weight') :
 			con.properties['line_width'] = float(e.parms['weight']) / 10.0 # arbitray anyway
 		layer.add_object(con)
-		if e.src in nodes :
+		if nodes.has_key(e.src) :
 			h = con.handles[0]
 			obj = nodes[e.src]
 			# by moving to the cp position first, the connection's points get recalculated
 			pos = obj.connections[8].pos
 			con.move_handle(h, pos, 0, 0)
 			h.connect(obj.connections[8]) # connect to mid-point
-		if e.dest in nodes :
+		if nodes.has_key(e.dest) :
 			h = con.handles[-1]
 			obj = nodes[e.dest]
 			pos = obj.connections[8].pos
 			con.move_handle(h, pos, 0, 0)
 			h.connect (obj.connections[8]) # connect to mid-point
-		if 'label' in e.parms :
+		if e.parms.has_key('label') :
 			AddLabel (layer, e.LabelPos(), e.parms['label'], e.FontSize())
 	diagram = None # FIXME: get it
 	if diagram :
@@ -271,9 +270,9 @@ if __name__ == '__main__':
 	# just testing at the moment
 	nodes, edges = Parse(sys.argv[1])
 	for k, n in nodes.iteritems() :
-		print("Name:", n.name, "Pos:", n.Pos(), "WxH:", n.Size())
+		print "Name:", n.name, "Pos:", n.Pos(), "WxH:", n.Size()
 	for e in edges :
-		print(e.src, "->", e.dest, e.LabelPos(), e.parms)
+		print e.src, "->", e.dest, e.LabelPos(), e.parms
 else :
 	# run as a Dia plug-in
 	import dia

@@ -27,7 +27,6 @@
 # As well as the starting attributes in namespace, the session will also
 # have access to the list __history__, which is the command history.
 
-from __future__ import print_function
 import sys, string, traceback
 
 # Make sure we use pygtk for gtk 2.0
@@ -100,8 +99,8 @@ class gtkoutfile:
 		self.__w.text_insert(self.__tag, s)
 	def writelines(self, l):
 		self.__w.text_insert(self.__tag, l)
-	def seek(self, a):   raise IOError(29, 'Illegal seek')
-	def tell(self):      raise IOError(29, 'Illegal seek')
+	def seek(self, a):   raise IOError, (29, 'Illegal seek')
+	def tell(self):      raise IOError, (29, 'Illegal seek')
 	truncate = tell
 
 class Console(gtk.VBox):
@@ -298,9 +297,9 @@ class Console(gtk.VBox):
 			try:
 				r = eval(cmd, self.namespace, self.namespace)
 				if r is not None:
-					print(repr(r))
+					print `r`
 			except SyntaxError:
-				exec(cmd, self.namespace)
+				exec cmd in self.namespace
 		except:
 			if hasattr(sys, 'last_type') and \
 					sys.last_type == SystemExit:
@@ -347,7 +346,7 @@ try :
 	                       open_console)
 
 except :
-	print('Failed to import Dia ...')
+	print 'Failed to import Dia ...'
 	gtk_console({'__builtins__': __builtins__, '__name__': '__main__',
 		'__doc__': None})
 	gtk.main()
