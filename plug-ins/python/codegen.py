@@ -17,22 +17,22 @@
 
 import sys, dia
 
-class Klass :
-	def __init__ (self, name) :
+class Klass:
+	def __init__(self, name):
 		self.name = name
 		# use a list to preserve the order
 		self.attributes = []
 		# a list, as java/c++ support multiple methods with the same name
 		self.operations = []
-		self.comment = ""
+		self.comment = ''
 		self.parents = []
 		self.templates = []
-		self.inheritance_type = ""
-	def AddAttribute(self, name, type, visibility, value, comment, class_scope) :
-		self.attributes.append ((name, (type, visibility, value, comment, class_scope)))
-	def AddOperation(self, name, type, visibility, params, inheritance_type, comment, class_scope) :
+		self.inheritance_type = ''
+	def AddAttribute(self, name, type, visibility, value, comment, class_scope):
+		self.attributes.append((name, (type, visibility, value, comment, class_scope)))
+	def AddOperation(self, name, type, visibility, params, inheritance_type, comment, class_scope):
 		self.operations.append((name,(type, visibility, params, inheritance_type, comment, class_scope)))
-	def SetComment(self, s) :
+	def SetComment(self, s):
 		self.comment = s
 	def AddParrent(self, parrent):
 		self.parents.append(parrent)
