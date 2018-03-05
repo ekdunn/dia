@@ -45,31 +45,31 @@ class Klass:
 # \brief Base class of all the code generators
 # \extends _DiaPyRenderer
 # \ingroup PyDia
-class ObjRenderer :
-	"Implements the Object Renderer Interface and transforms diagram into its internal representation"
-	def __init__ (self) :
+class ObjRenderer:
+	"Implement the Object Renderer Interface and transform diagram into its internal representation."
+	def __init__(self):
 		# an empty dictionary of classes
 		self.klasses = {}
 		self.arrows = []
-		self.filename = ""
+		self.filename = ''
 
 	def begin_render (self, data, filename) :
 		self.filename = filename
 		# not only reset the filename but also the other state, otherwise we would accumulate information through every export
 		self.klasses = {}
 		self.arrows = []
-		for layer in data.layers :
+		for layer in data.layers:
 			# for the moment ignore layer info. But we could use this to spread accross different files
-			for o in layer.objects :
-				if o.type.name == "UML - Class" :
-					#print o.properties["name"].value
-					k = Klass (o.properties["name"].value)
-					k.SetComment(o.properties["comment"].value)
-					if o.properties["abstract"].value:
-						k.SetInheritance_type("abstract")
-					if o.properties["template"].value:
-						k.SetInheritance_type("template")
-					for op in o.properties["operations"].value :
+			for o in layer.objects:
+				if o.type.name == 'UML - Class':
+					#print o.properties['name'].value
+					k = Klass(o.properties['name'])
+					k.SetComment(o.properties['comment'])
+					if o.properties['abstract'].value:
+						k.SetInheritance_type('abstract')
+					if o.properties['template'].value:
+						k.SetInheritance_type('template')
+					for op in o.properties['operations'].value :
 						# op : a tuple with fixed placing, see: objects/UML/umloperations.c:umloperation_props
 						# (name, type, comment, stereotype, visibility, inheritance_type, class_scope, params)
 						params = []
@@ -78,15 +78,15 @@ class ObjRenderer :
 							# (name, type, value, comment, kind)
 							params.append((par[0], par[1], par[2], par[3], par[4]))
 						k.AddOperation (op[0], op[1], op[4], params, op[5], op[2], op[7])
-					#print o.properties["attributes"].value
-					for attr in o.properties["attributes"].value :
+					#print o.properties['attributes'].value
+					for attr in o.properties['attributes'].value :
 						# see objects/UML/umlattributes.c:umlattribute_props
-						#print "\t", attr[0], attr[1], attr[4]
+						#print '\t', attr[0], attr[1], attr[4]
 						# name, type, value, comment, visibility, abstract, class_scope
 						k.AddAttribute(attr[0], attr[1], attr[4], attr[2], attr[3], attr[6])
-					self.klasses[o.properties["name"].value] = k
+					self.klasses[o.properties['name'].value] = k
 					#Connections
-				elif o.type.name == "UML - Association" :
+				elif o.type.name == 'UML - Association' :
 					# should already have got attributes relation by names
 					pass
 				# other UML objects which may be interesting
@@ -97,7 +97,7 @@ class ObjRenderer :
 			for o in layer.objects :
 				for c in o.connections:
 					for n in c.connected:
-						if not n.type.name in ("UML - Generalization", "UML - Realizes"):
+						if not n.type.name in ('UML - Generalization', 'UML - Realizes'):
 							continue
 						if str(n) in edges:
 							continue
@@ -106,11 +106,11 @@ class ObjRenderer :
 							continue
 						par = n.handles[0].connected_to.object
 						chi = n.handles[1].connected_to.object
-						if not par.type.name == "UML - Class" and chi.type.name == "UML - Class":
+						if not par.type.name == 'UML - Class' and chi.type.name == 'UML - Class':
 							continue
-						par_name = par.properties["name"].value
-						chi_name = chi.properties["name"].value
-						if n.type.name == "UML - Generalization":
+						par_name = par.properties['name'].value
+						chi_name = chi.properties['name'].value
+						if n.type.name == 'UML - Generalization':
 							self.klasses[chi_name].AddParrent(par_name)
 						else: self.klasses[chi_name].AddTemplate(par_name)
 
@@ -130,30 +130,30 @@ class PyRenderer(ObjRenderer):
 				k = self.klasses[sk] # convenience
 				parents = k.parents + k.templates
 				if not parents:
-					f.write ("class %s:\n" % (sk,))
+					f.write ('class %s:\n' % (sk,))
 				else:
-					f.write ("class %s(%s):\n" % (sk,", ".join(parents)))
+					f.write ('class %s(%s):\n' % (sk,', '.join(parents)))
 				if len(k.comment) > 0:
-					f.write ("\t'''" + k.comment + "'''\n")
-				f.write ("\tdef __init__(self):\n")
+					f.write ('\t"""' + k.comment + '"""\n\n')
+				f.write ('\tdef __init__(self):\n')
 				for sa, attr in k.attributes:
 					value = attr[2] == '" and "None' or attr[2]
-					f.write("\t\tself.%s = %s # %s\n" % (sa, value, attr[0]))
+					f.write('\t\tself.%s = %s # %s\n' % (sa, value, attr[0]))
 				else: # Doesn't seem to be working
-					f.write("\t\tpass\n")
+					f.write('\t\tpass\n')
 				f.write('\n') # new line after __init__
 				for so, op in k.operations:
 					# we only need the parameter names
-					pars = "self"
+					pars = 'self'
 					for p in op[2]:
 						if 'self' not in p[0]:
-							pars = pars + ", " + p[0]
+							pars = pars + ', ' + p[0]
 						else:
 							pars = p[0]
-					f.write("\tdef %s(%s):\n" % (so, pars))
-					if op[4]: f.write("\t\t\"\"\" %s \"\"\"\n" % op[4])
-					f.write("\t\t# returns %s\n" % (op[0], ))
-					f.write("\t\tpass\n\n")
+					f.write('\tdef %s(%s):\n' % (so, pars))
+					if op[4]: f.write('\t\t""" %s """\n' % op[4])
+					f.write('\t\t# returns %s\n' % (op[0], ))
+					f.write('\t\tpass\n\n')
 		ObjRenderer.end_render(self)
 
 ##
@@ -162,17 +162,17 @@ class CxxRenderer(ObjRenderer) :
 	def __init__(self) :
 		ObjRenderer.__init__(self)
 	def end_render(self) :
-		f = open(self.filename, "w")
-		f.write("/* generated by dia/codegen.py */\n")
+		f = open(self.filename, 'w')
+		f.write('/* generated by dia/codegen.py */\n')
 		# declaration
 		for sk in self.klasses.keys() :
 			k = self.klasses[sk]
 			if len(k.comment) > 0 :
-				f.write ("/*" + k.comment + "*/\n")
+				f.write ('/*' + k.comment + '*/\n')
 			if len(k.parents) > 0 :
-				f.write ("class %s : %s \n{\n" % (sk, ", ".join(k.parents)))
+				f.write ('class %s : %s \n{\n' % (sk, ', '.join(k.parents)))
 			else :
-				f.write ("class %s \n{\n" % (sk,))
+				f.write ('class %s \n{\n' % (sk,))
 			# first sort by visibility
 			ops = [[], [], [], []]
 			for so, (t, v, p, i, c, s) in k.operations :
@@ -181,41 +181,41 @@ class CxxRenderer(ObjRenderer) :
 			for sa, (t, vi, va, vc, class_scope) in k.attributes :
 				#TODO: use 'va'=value 'vc'=comment
 				vars[vi].append((t, sa))
-			visibilities = ("public:", "private:", "protected:", "/* implementation: */")
+			visibilities = ('public:', 'private:', 'protected:', '/* implementation: */')
 			for v in [0,2,1,3] :
 				if len(ops[v]) == 0 and len(vars[v]) == 0 :
 					continue
-				f.write ("%s\n" % visibilities[v])
+				f.write ('%s\n' % visibilities[v])
 				for op in ops[v] :
-					if op[4] != "" :
+					if op[4] != '' :
 						f.write ('\t/* ' + op[4] + ' */\n')
-					inh = ""
+					inh = ''
 					if op[3] < 2 :
-						inh = "virtual "
+						inh = 'virtual '
 					# detect ctor/dtor
-					so = ""
-					if sk == op[1] or ("~" + sk) == op[1] :
-						so = "\t%s%s (" % (inh, op[1])
+					so = ''
+					if sk == op[1] or ('~' + sk) == op[1] :
+						so = '\t%s%s (' % (inh, op[1])
 					else :
-						so = "\t%s%s %s (" % (inh, op[0], op[1])
+						so = '\t%s%s %s (' % (inh, op[0], op[1])
 					f.write (so)
 					# align parameters with the opening brace
 					n = len(so)
 					i = 0
 					m = len(op[2]) - 1
 					for p in op[2] :
-						linefeed = ",\n\t" + " " * (n - 1)
+						linefeed = ',\n\t' + ' ' * (n - 1)
 						if i == m :
-							linefeed = ""
-						f.write ("%s %s%s" % (p[1], p[0], linefeed))
+							linefeed = ''
+						f.write ('%s %s%s' % (p[1], p[0], linefeed))
 						i = i + 1
 					if op[3] == 0 : # abstract ?= pure virtual?
-						f.write(") = 0;\n")
+						f.write(') = 0;\n')
 					else :
-						f.write(");\n")
+						f.write(');\n')
 				for var in vars[v] :
-					f.write("\t%s %s;\n" % (var[0], var[1]))
-			f.write ("};\n\n")
+					f.write('\t%s %s;\n' % (var[0], var[1]))
+			f.write ('};\n\n')
 		# implementation
 		# ...
 		f.close()
@@ -236,28 +236,28 @@ class JsRenderer(ObjRenderer) :
 	def __init__(self) :
 		ObjRenderer.__init__(self)
 	def end_render(self) :
-		f = open(self.filename, "w")
-		f.write("/* generated by dia/codegen.py */\n\n")
+		f = open(self.filename, 'w')
+		f.write('/* generated by dia/codegen.py */\n\n')
 		for sk in self.klasses.keys() :
-			f.write("// class definition : %s\n" % (sk, ))
+			f.write('// class definition : %s\n' % (sk, ))
 			parents = self.klasses[sk].parents
 			#add inheritance
 			if parents:
-				f.write("// Inherits from %s.\n" % (parents[0], ))
-				f.write("%s.prototype = new %s();\n" % (sk, parents[0]))
-				f.write("%s.prototype.constructor = %s;\n\n" % (sk, sk))
-			f.write ("function %s () {\n" % (sk,))
+				f.write('// Inherits from %s.\n' % (parents[0], ))
+				f.write('%s.prototype = new %s();\n' % (sk, parents[0]))
+				f.write('%s.prototype.constructor = %s;\n\n' % (sk, sk))
+			f.write ('function %s () {\n' % (sk,))
 			k = self.klasses[sk]
 			if len(k.comment) > 0 :
-				f.write ("\n\t/*" + k.comment + "*/\n")
+				f.write ('\n\t/*' + k.comment + '*/\n')
 			#use strict
-			f.write("\t\"use strict\";\n")
+			f.write('\t\'use strict\';\n')
 			if k.attributes:
-				f.write("\n")
+				f.write('\n')
 			#all attributes are public
 			for sa, attr in k.attributes :
-				value = attr[2] == "" and "null" or attr[2]
-				f.write("\tthis.%s = %s;\n" % (sa, value))
+				value = attr[2] == '' and 'null' or attr[2]
+				f.write('\tthis.%s = %s;\n' % (sa, value))
 				#expected types checks (constructor)
 				if attr[0]:
 					f.write("\tif (typeof(this.%s) !== '%s') {\n" % (sa, attr[0]));
@@ -270,15 +270,15 @@ class JsRenderer(ObjRenderer) :
 				return p[0]
 			for so, op in k.operations :
 				# only parameter names needed
-				pars = ", ".join(map(p_name,op[2]))
-				f.write("%s.prototype.%s = function(%s) {\n" % (sk, so, pars))
-				if op[4]: f.write("\t/* %s */\n" % op[4])
-				f.write("\t\"use strict\";\n\n")
+				pars = ', '.join(map(p_name,op[2]))
+				f.write('%s.prototype.%s = function(%s) {\n' % (sk, so, pars))
+				if op[4]: f.write('\t/* %s */\n' % op[4])
+				f.write('\t"use strict";\n\n')
 				for p in op[2]:
 					#default values :
 					if len(p[2]) > 0 :
 						t = (p[0], p[0], p[2])
-						f.write("\tif (%s === undefined) {\n\t%s = %s;\n\t}\n" % t)
+						f.write('\tif (%s === undefined) {\n\t%s = %s;\n\t}\n' % t)
 					#expected types checks
 					if len(p[3]) > 0 :
 						f.write("\tif (typeof(%s) !== '%s') {\n" % (p[0], p[3]));
@@ -293,20 +293,20 @@ class JsRenderer(ObjRenderer) :
 ##
 # PascalRenderer: export Dia UML diagram to Object Pascal (Free Pascal, Delphi)
 #
-# Please follow some "drawing guidelines" and "naming conventions" so that the
+# Please follow some 'drawing guidelines' and 'naming conventions' so that the
 # exporter can do its job.
-#  - Use "UML - Generalization" arrows for class inheritance.
-#  - Use "UML - Realizes" arrows when implementing an interface.
-#  - Set a class to be "abstract" to denote it is an interface definition.
-#  - Set Inheritance Type to "abstract" for 'virtual; abstract;' methods, set
-#    it to "virtual" for 'virtual;' methods.
-#  - Array fields are automatically recognized. If the name ends with "[]"
-#    an 'Array of' is used. If the name uses a number with "[1234]", an
+#  - Use 'UML - Generalization' arrows for class inheritance.
+#  - Use 'UML - Realizes' arrows when implementing an interface.
+#  - Set a class to be 'abstract' to denote it is an interface definition.
+#  - Set Inheritance Type to 'abstract' for 'virtual; abstract;' methods, set
+#    it to 'virtual' for 'virtual;' methods.
+#  - Array fields are automatically recognized. If the name ends with '[]'
+#    an 'Array of' is used. If the name uses a number with '[1234]', an
 #    'Array[0..1233] of' is used. If the name uses a constant with
-#    "[MaxEntries]" an 'Array[0..MaxEntries-1] of' is written.
+#    '[MaxEntries]' an 'Array[0..MaxEntries-1] of' is written.
 #  - To inherit from classes which are not drawn (e.g. LCL/VCL classes),
 #    name then class with the parent class in paranthesis (e.g.
-#    "TMainWin(TForm)"
+#    'TMainWin(TForm)'
 #
 # Features
 #  - Inheriting from one class and implementing multiple interfaces is
@@ -324,17 +324,17 @@ class JsRenderer(ObjRenderer) :
 #    to avoid declaration order problems.
 #
 # TODO:
-#  - Automatically use the keyword "override" instead of "virtual" in
+#  - Automatically use the keyword 'override' instead of 'virtual' in
 #    descendant classes.
 #  - Automatically define 'Properties'. Unfortunately the UML standard
 #    doesn't support this and so the Dia dialog has no option to specify
-#    this. So a "code" has to be used.
+#    this. So a 'code' has to be used.
 #  - Mark/recognize Constructors and Destructors
 #  - Write comments for method parameters (e.g. by using a big doxygen
 #    comment '(** ... *)' before the method)
-#  - Use "Packages" to split the classes in separate 'Unit's.
-#  - Beautify and comment the export code. Using arrays with "magic number
-#    indexes" for certain fields is bad and tedious to work with.
+#  - Use 'Packages' to split the classes in separate 'Unit's.
+#  - Beautify and comment the export code. Using arrays with 'magic number
+#    indexes' for certain fields is bad and tedious to work with.
 #  - Support defining global constants.
 #  - Support defining global types (especially for enums, arrays,
 #    records, ...).
@@ -343,18 +343,18 @@ class JsRenderer(ObjRenderer) :
 #     - if implementing an interface, all required methods must be
 #       implemented; alternative: just put all methods there, so the UML
 #       drawer doesn't have to write them twice
-#     - visibility for all methods of an interfaces must be "public"
+#     - visibility for all methods of an interfaces must be 'public'
 #     - don't write the visibility specifier 'public' for interfaces
-#     - no "Attributes" for interface definitions, but properties are
+#     - no 'Attributes' for interface definitions, but properties are
 #       allowed
 #     - default values for method parameters must be the last parameters
 class PascalRenderer(ObjRenderer) :
 	def __init__(self) :
 		ObjRenderer.__init__(self)
 	def end_render(self) :
-		f = open(self.filename, "w")
-		f.write("/* generated by dia/codegen.py */\n")
-		f.write("Type\n")
+		f = open(self.filename, 'w')
+		f.write('/* generated by dia/codegen.py */\n')
+		f.write('Type\n')
 		# classes
 		class_names = self.klasses.keys()
 		class_names.sort()
@@ -362,31 +362,31 @@ class PascalRenderer(ObjRenderer) :
 		for sk in class_names :
 			k = self.klasses[sk]
 			# class declaration
-			if k.inheritance_type == "abstract" :
-				f.write ("  %s = interface;\n" % (sk))
+			if k.inheritance_type == 'abstract' :
+				f.write ('  %s = interface;\n' % (sk))
 			else :
-				f.write ("  %s = class;\n" % (sk))
-		f.write("\n");
+				f.write ('  %s = class;\n' % (sk))
+		f.write('\n');
 		# class declarations
 		for sk in class_names :
 			k = self.klasses[sk]
 			# comment
 			if len(k.comment) > 0 :
-				f.write("  /// %s\n" % (k.comment))
+				f.write('  /// %s\n' % (k.comment))
 			# class declaration
-			if k.inheritance_type == "abstract" :
-				f.write ("  %s = interface" % (sk))
+			if k.inheritance_type == 'abstract' :
+				f.write ('  %s = interface' % (sk))
 			else :
-				f.write ("  %s = class %s" % (sk, k.inheritance_type))
+				f.write ('  %s = class %s' % (sk, k.inheritance_type))
 			# inherited classes / implemented interfaces
 			p = []
 			if k.parents :
 				p.append(k.parents[0])
 			if k.templates :
-				p.append(",".join(k.templates))
+				p.append(','.join(k.templates))
 			if len(p) > 0 :
-				f.write("(%s)" % ",".join(p))
-			f.write ("\n")
+				f.write('(%s)' % ','.join(p))
+			f.write ('\n')
 			# first sort by visibility
 			ops = [[], [], [], [], [], []]
 			for op_name, (op_type, op_visibility, op_params, op_inheritance, op_comment, op_class_scope) in k.operations :
@@ -394,73 +394,73 @@ class PascalRenderer(ObjRenderer) :
 			vars = [[], [], [], []]
 			for var_name, (var_type, var_visibility, var_value, var_comment, class_scope) in k.attributes :   # name, type, visibility, value, comment
 				vars[var_visibility].append((var_type, var_name, var_value, var_comment))
-			visibilities = ("public", "private", "protected", "/* implementation */")
+			visibilities = ('public', 'private', 'protected', '/* implementation */')
 			for v in [1,2,0,3] :
 				if len(ops[v]) == 0 and len(vars[v]) == 0 :
 					continue
 				# visibility prefix
-				f.write ("  %s\n" % visibilities[v])
+				f.write ('  %s\n' % visibilities[v])
 				# variables
 				for var in vars[v] :
 					# comment
 					if len(var[3]) > 0 :
-						f.write ("    /// %s\n" % var[3])
-					if var[1].endswith("]") :
+						f.write ('    /// %s\n' % var[3])
+					if var[1].endswith(']') :
 						# array; check if this is dynamic or with defined size
-						i = var[1].find("[")
+						i = var[1].find('[')
 						varname = var[1]
 						arraysize = varname[i+1:-1]
 						varname = varname[:i]
 						if len(arraysize) > 0 :
 							# array with defined size
-							if arraysize.find("..") > 0 :
-								f.write("    %s : Array[%s] of %s;\n" % (varname, arraysize, var[0]))
+							if arraysize.find('..') > 0 :
+								f.write('    %s : Array[%s] of %s;\n' % (varname, arraysize, var[0]))
 							elif arraysize.isdigit() :
 								arraysize = int(arraysize)-1
-								f.write("    %s : Array[0..%d] of %s;\n" % (varname, arraysize, var[0]))
+								f.write('    %s : Array[0..%d] of %s;\n' % (varname, arraysize, var[0]))
 							else :
-								f.write("    %s : Array[0..%s-1] of %s;\n" % (varname, arraysize, var[0]))
+								f.write('    %s : Array[0..%s-1] of %s;\n' % (varname, arraysize, var[0]))
 						else :
 							# dynamic size
-							f.write("    %s : Array of %s;\n" % (varname, var[0]))
+							f.write('    %s : Array of %s;\n' % (varname, var[0]))
 					else :
 						# normal variable
-						f.write("    %s : %s;\n" % (var[1], var[0]))
+						f.write('    %s : %s;\n' % (var[1], var[0]))
 				# operations
 				for op in ops[v] :
 					if len(op[3]) > 0 :
-						f.write ("    /// %s\n" % op[3])
+						f.write ('    /// %s\n' % op[3])
 					if len(op[0]) == 0 :
-						f.write ("    Procedure %s" % op[1])
+						f.write ('    Procedure %s' % op[1])
 					else :
-						f.write ("    Function %s" % op[1])
+						f.write ('    Function %s' % op[1])
 					if len(op[2]) > 0 :
-						f.write ("(")
+						f.write ('(')
 						i = 0
 						m = len(op[2]) - 1
 						for p in op[2] :
 							if p[4] == 2 :
-								f.write ("Out ")
+								f.write ('Out ')
 							elif p[4] == 3 :
-								f.write ("Var ")
-							f.write ("%s:%s" % (p[0], p[1]))
+								f.write ('Var ')
+							f.write ('%s:%s' % (p[0], p[1]))
 							if len(p[2]) > 0 :
-								f.write (":=%s" % p[2])
+								f.write (':=%s' % p[2])
 							if i != m :
-								f.write(";")
+								f.write(';')
 							i = i + 1
-						f.write (")")
+						f.write (')')
 					if len(op[0]) == 0 :
-						f.write(";")
+						f.write(';')
 					else :
-						f.write (" : %s;" % op[0])
+						f.write (' : %s;' % op[0])
 					# inheritance type
 					if op[4] == 0 :
-						f.write (" virtual; abstract;");
+						f.write (' virtual; abstract;');
 					elif op[4] == 1 :
-						f.write (" virtual;");
-					f.write ("\n")
-			f.write ("  End;\n\n")
+						f.write (' virtual;');
+					f.write ('\n')
+			f.write ('  End;\n\n')
 		# implementation
 		# ...
 		f.close()
@@ -479,62 +479,62 @@ class PascalRenderer(ObjRenderer) :
 #	  the dia/codegen.py firm :)
 #
 # Fixes:
-#	* Visibilities "private" and "protected" were reversed.
+#	* Visibilities 'private' and 'protected' were reversed.
 #	* Comments for classes, attributes, methods and methods parameters.
 #	* Comments are divided into lines if they exceed 79 characters.
 #	* Splits the classes in separate files.
-#	* Not write "NULL" in empty comments.
+#	* Not write 'NULL' in empty comments.
 #	* Writes the default values of the arguments of the methods.
 #	* Makes public all the classes and interfaces.
-#	* Not write "static" in all the methods.
+#	* Not write 'static' in all the methods.
 #
 class JavaRenderer(ObjRenderer) :
 	def __init__(self) :
 		ObjRenderer.__init__(self)
 
 	def end_render(self) :
-		visibilities = {0:"public", 1:"private", 2:"protected"}
+		visibilities = {0:'public', 1:'private', 2:'protected'}
 
-		mainfile = open(self.filename, "w")
-		mainfile.write("/* Generated by dia/codegen.py\n *\n * Generated files:\n")
+		mainfile = open(self.filename, 'w')
+		mainfile.write('/* Generated by dia/codegen.py\n *\n * Generated files:\n')
 		for name, klass in self.klasses.iteritems() :
 			# splits the classes in separate files
-			classfile = self.filename[:self.filename.rfind("/")+1] + name.capitalize() + ".java"
-			f = open(classfile, "w")
+			classfile = self.filename[:self.filename.rfind('/')+1] + name.capitalize() + '.java'
+			f = open(classfile, 'w')
 			# class comment
-			f.write("/**\n")
+			f.write('/**\n')
 			if len(klass.comment) > 1:
 				for l in range(len(klass.comment)/77+1):
-					f.write(" * %s\n" % klass.comment[l*77:(l+1)*77])
-			f.write(" * @author\n *\n */\n")
+					f.write(' * %s\n' % klass.comment[l*77:(l+1)*77])
+			f.write(' * @author\n *\n */\n')
 
-			if klass.inheritance_type == "template": classtype = "public interface"
-			elif klass.inheritance_type == "abstract": classtype = "public abstract class"
-			else: classtype = "public class"
-			f.write ("%s %s" % (classtype, name))
+			if klass.inheritance_type == 'template': classtype = 'public interface'
+			elif klass.inheritance_type == 'abstract': classtype = 'public abstract class'
+			else: classtype = 'public class'
+			f.write ('%s %s' % (classtype, name))
 			if klass.parents:
-				f.write (" extends %s" % klass.parents[0])
+				f.write (' extends %s' % klass.parents[0])
 			if klass.templates:
-				f.write (" implements %s" % ", ".join(klass.templates))
-			f.write(" {\n")
+				f.write (' implements %s' % ', '.join(klass.templates))
+			f.write(' {\n')
 
 			# attributes
 			for attrname, (type, visibility, value, comment, class_scope) in klass.attributes :
 				if comment:
-					f.write("\t/**\n")
+					f.write('\t/**\n')
 					for l in range(len(comment)/73+1):
-						f.write("\t * %s\n" % comment[l*73:(l+1)*73])
-					f.write("\t */\n")
+						f.write('\t * %s\n' % comment[l*73:(l+1)*73])
+					f.write('\t */\n')
 				if visibility in visibilities:
-					vis = visibilities[visibility]+" "
-				else: vis = ""
-				f.write("\t%s%s %s" % (vis, type, attrname))
-				if value: f.write(" = %s" % value)
-				f.write(";\n")
+					vis = visibilities[visibility]+' '
+				else: vis = ''
+				f.write('\t%s%s %s' % (vis, type, attrname))
+				if value: f.write(' = %s' % value)
+				f.write(';\n')
 
 			# dafault constructor
-			if not klass.inheritance_type == "template":
-				f.write ("\n\tpublic %s() {\n\t\t\n\t}\n\n" % name)
+			if not klass.inheritance_type == 'template':
+				f.write ('\n\tpublic %s() {\n\t\t\n\t}\n\n' % name)
 
 			# We should automatic implement abstract parrent and interface methods
 			parmethods = []
@@ -554,43 +554,43 @@ class JavaRenderer(ObjRenderer) :
 
 			for methodname, method in klass.operations :
 				# method comment
-				f.write("\t/**\n")
+				f.write('\t/**\n')
 				if method[4]:
 					for l in range(len(method[4])/73+1):
-						f.write("\t * %s\n" % method[4][l*73:(l+1)*73])
+						f.write('\t * %s\n' % method[4][l*73:(l+1)*73])
 				if method[2]:
 					for param in method[2]:
-						f.write("\t * @param %s\n" % param[0]) #param[0]->name
-				f.write("\t * @return %s\n\t */\n" % (method[0]=="" and "void" or method[0]))
+						f.write('\t * @param %s\n' % param[0]) #param[0]->name
+				f.write('\t * @return %s\n\t */\n' % (method[0]=='' and 'void' or method[0]))
 				# if there are no parameter names, something else should appear
 				pars = []
-				v = ord("a")
+				v = ord('a')
 				for name, type, value, comment, kind in method[2]:
 					#TODO: also use: kind
 					if not name:
 						name = chr(v)
 						v += 1
 					if value:
-						value = "=" + value
+						value = '=' + value
 					pars.append((type, name, value))
-				pars = ", ".join([type+" "+name+value for type, name, value in pars])
+				pars = ', '.join([type+' '+name+value for type, name, value in pars])
 
-				vis = method[1] in visibilities and visibilities[method[1]] or ""
-				return_type = method[0] == "" and "void" or method[0]
-				inheritance_type = method[3] == 0 and "abstract " or ""
+				vis = method[1] in visibilities and visibilities[method[1]] or ''
+				return_type = method[0] == '' and 'void' or method[0]
+				inheritance_type = method[3] == 0 and 'abstract ' or ''
 				# this is wrong!
-				#static = method[4] and "static " or ""
-				static = ""
-				f.write("\t%s %s%s%s %s(%s)" % (vis, static, inheritance_type, \
+				#static = method[4] and 'static ' or ''
+				static = ''
+				f.write('\t%s %s%s%s %s(%s)' % (vis, static, inheritance_type, \
 												return_type, methodname, pars))
-				if klass.inheritance_type == "template" or method[3] == 0:
-					f.write(";\n\n")
+				if klass.inheritance_type == 'template' or method[3] == 0:
+					f.write(';\n\n')
 				else:
-					f.write(" {\n\t\t// TODO Auto-generated method stub\n\t}\n\n")
-			f.write ("}\n\n")
+					f.write(' {\n\t\t// TODO Auto-generated method stub\n\t}\n\n')
+			f.write ('}\n\n')
 			f.close()
-			mainfile.write(" *\t%s\n" % classfile)
-		mainfile.write(" */\n")
+			mainfile.write(' *\t%s\n' % classfile)
+		mainfile.write(' */\n')
 		mainfile.close()
 		ObjRenderer.end_render(self)
 
@@ -606,46 +606,46 @@ class PhpRenderer(ObjRenderer) :
 		ObjRenderer.__init__(self)
 
 	def end_render(self) :
-		visibilities = {0:"public", 1:"private", 2:"protected"}
+		visibilities = {0:'public', 1:'private', 2:'protected'}
 
-		mainfile = open(self.filename, "w")
-		mainfile.write("<?php\n/* Generated by dia/codegen.py\n *\n * Generated files:\n")
+		mainfile = open(self.filename, 'w')
+		mainfile.write('<?php\n/* Generated by dia/codegen.py\n *\n * Generated files:\n')
 
 		for name, klass in self.klasses.iteritems() :
 			# splits the classes in separate files
-			classfile = self.filename[:self.filename.rfind("/")+1] + name + ".php"
-			f = open(classfile, "w")
+			classfile = self.filename[:self.filename.rfind('/')+1] + name + '.php'
+			f = open(classfile, 'w')
 			# class comment
-			f.write("<?php\n/**\n")
+			f.write('<?php\n/**\n')
 			if len(klass.comment) > 1:
 				for l in range(len(klass.comment)/77+1):
-					f.write(" * %s\n" % klass.comment[l*77:(l+1)*77])
-			f.write(" * @author\n *\n */\n")
+					f.write(' * %s\n' % klass.comment[l*77:(l+1)*77])
+			f.write(' * @author\n *\n */\n')
 
-			if klass.inheritance_type == "template": classtype = "interface"
-			elif klass.inheritance_type == "abstract": classtype = "abstract class"
-			else: classtype = "class"
-			f.write ("%s %s" % (classtype, name))
+			if klass.inheritance_type == 'template': classtype = 'interface'
+			elif klass.inheritance_type == 'abstract': classtype = 'abstract class'
+			else: classtype = 'class'
+			f.write ('%s %s' % (classtype, name))
 			if klass.parents:
-				f.write (" extends %s" % klass.parents[0])
+				f.write (' extends %s' % klass.parents[0])
 			if klass.templates:
-				f.write (" implements %s" % ", ".join(klass.templates))
-			f.write("\n{\n")
+				f.write (' implements %s' % ', '.join(klass.templates))
+			f.write('\n{\n')
 
 			# attributes
 			for attrname, (type, visibility, value, comment, class_scope) in klass.attributes :
 				if comment:
-					f.write("\t/**\n")
+					f.write('\t/**\n')
 					for l in range(len(comment)/73+1):
-						f.write("\t * %s\n" % comment[l*73:(l+1)*73])
-					f.write("\t */\n")
+						f.write('\t * %s\n' % comment[l*73:(l+1)*73])
+					f.write('\t */\n')
 				if visibility in visibilities:
 					vis = visibilities[visibility]
-				else: vis = ""
-				static = class_scope and "static " or ""
-				f.write("\t%s%s $%s" % (static, vis, attrname))
-				if value: f.write(" = %s" % value)
-				f.write(";\n")
+				else: vis = ''
+				static = class_scope and 'static ' or ''
+				f.write('\t%s%s $%s' % (static, vis, attrname))
+				if value: f.write(' = %s' % value)
+				f.write(';\n')
 
 			# We should automatic implement abstract parent and interface methods
 			parmethods = []
@@ -665,42 +665,42 @@ class PhpRenderer(ObjRenderer) :
 
 			for methodname, method in klass.operations :
 				# method comment
-				f.write("\t/**\n")
+				f.write('\t/**\n')
 				if method[4]:
 					for l in range(len(method[4])/73+1):
-						f.write("\t * %s\n" % method[4][l*73:(l+1)*73])
+						f.write('\t * %s\n' % method[4][l*73:(l+1)*73])
 				if method[2]:
 					for param in method[2]:
-						f.write("\t * @param %s\n" % param[0]) #param[0]->name
-				f.write("\t * @return %s\n\t */\n" % (method[0]=="" or method[0]))
+						f.write('\t * @param %s\n' % param[0]) #param[0]->name
+				f.write('\t * @return %s\n\t */\n' % (method[0]=='' or method[0]))
 				# if there are no parameter names, something else should appear
 				pars = []
-				v = ord("a")
+				v = ord('a')
 				for name, type, value, comment, kind in method[2]:
 					#TODO: also use: kind
 					if not name:
 						name = chr(v)
 						v += 1
 					if value:
-						value = " = " + value
+						value = ' = ' + value
 					pars.append((type, '$' + name, value))
-				pars = ", ".join([type+" "+name+value for type, name, value in pars])
+				pars = ', '.join([type+' '+name+value for type, name, value in pars])
 
-				vis = method[1] in visibilities and visibilities[method[1]] or ""
-				return_type = method[0] == "" or method[0]
+				vis = method[1] in visibilities and visibilities[method[1]] or ''
+				return_type = method[0] == '' or method[0]
 				# TODO inheritance type is set to leaf/final by default in Dia. A normal type is need for the default
-				#inheritance_type = method[3] == 0 and "abstract " or method[3] == 2 and "final " or ""
-				inheritance_type = method[3] == 0 and "abstract " or ""
-				static = method[5] and "static " or ""
-				f.write("\t%s%s%sfunction %s(%s)" % (static, vis + ' ', inheritance_type, methodname, pars))
-				if klass.inheritance_type == "template" or method[3] == 0:
-					f.write(";\n\n")
+				#inheritance_type = method[3] == 0 and 'abstract ' or method[3] == 2 and 'final ' or ''
+				inheritance_type = method[3] == 0 and 'abstract ' or ''
+				static = method[5] and 'static ' or ''
+				f.write('\t%s%s%sfunction %s(%s)' % (static, vis + ' ', inheritance_type, methodname, pars))
+				if klass.inheritance_type == 'template' or method[3] == 0:
+					f.write(';\n\n')
 				else:
-					f.write("\n\t{\n\t\t// TODO Auto-generated method stub\n\t}\n\n")
-			f.write ("}\n\n")
+					f.write('\n\t{\n\t\t// TODO Auto-generated method stub\n\t}\n\n')
+			f.write ('}\n\n')
 			f.close()
-			mainfile.write(" *\t%s\n" % classfile)
-		mainfile.write(" */\n")
+			mainfile.write(' *\t%s\n' % classfile)
+		mainfile.write(' */\n')
 		mainfile.close()
 		ObjRenderer.end_render(self)
 
@@ -708,9 +708,9 @@ class PhpRenderer(ObjRenderer) :
 	def draw_string(*args):pass
 
 # dia-python keeps a reference to the renderer class and uses it on demand
-dia.register_export ("PyDia Code Generation (Python)", "py", PyRenderer())
-dia.register_export ("PyDia Code Generation (C++)", "cxx", CxxRenderer())
-dia.register_export ("PyDia Code Generation (Pascal)", "pas", PascalRenderer())
-dia.register_export ("PyDia Code Generation (Java)", "java", JavaRenderer())
-dia.register_export ("PyDia Code Generation (JavaScript)", "js", JsRenderer())
-dia.register_export ("PyDia Code Generation (PHP)", "php", PhpRenderer())
+dia.register_export ('PyDia Code Generation (Python)', 'py', PyRenderer())
+dia.register_export ('PyDia Code Generation (C++)', 'cxx', CxxRenderer())
+dia.register_export ('PyDia Code Generation (Pascal)', 'pas', PascalRenderer())
+dia.register_export ('PyDia Code Generation (Java)', 'java', JavaRenderer())
+dia.register_export ('PyDia Code Generation (JavaScript)', 'js', JsRenderer())
+dia.register_export ('PyDia Code Generation (PHP)', 'php', PhpRenderer())
